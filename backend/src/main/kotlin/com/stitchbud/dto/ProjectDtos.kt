@@ -91,6 +91,12 @@ data class UpdatePatternGridRequest(
     val cellData: String
 )
 
+data class RegisterProjectFileRequest(
+    val originalName: String,
+    val fileUrl: String,
+    val mimeType: String
+)
+
 data class AddMaterialRequest(
     val name: String,
     val type: String,

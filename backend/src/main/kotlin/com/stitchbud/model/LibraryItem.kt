@@ -7,9 +7,11 @@ import jakarta.persistence.*
 data class LibraryItem(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
+    var userId: String = "",
     var itemType: String = "",
     var name: String = "",
     var imageStoredName: String? = null,
+    var imageUrl: String? = null,
     // Yarn
     var yarnMaterial: String? = null,
     var yarnBrand: String? = null,

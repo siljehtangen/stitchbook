@@ -19,6 +19,7 @@ data class LibraryItemDto(
 
 data class UpdateLibraryItemRequest(
     val name: String? = null,
+    val imageUrl: String? = null,
     val yarnMaterial: String? = null,
     val yarnBrand: String? = null,
     val yarnAmountG: Int? = null,

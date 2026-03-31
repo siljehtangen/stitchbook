@@ -7,6 +7,7 @@ import org.springframework.core.io.FileSystemResource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 
@@ -15,22 +16,24 @@ import org.springframework.web.multipart.MultipartFile
 @CrossOrigin(origins = ["http://localhost:5173"])
 class LibraryController(private val libraryService: LibraryService) {
 
+    private fun userId() = SecurityContextHolder.getContext().authentication.name
+
     @GetMapping
-    fun getAll() = libraryService.getAll()
+    fun getAll() = libraryService.getAll(userId())
 
     @PostMapping
-    fun create(@RequestBody req: CreateLibraryItemRequest) = libraryService.create(req)
+    fun create(@RequestBody req: CreateLibraryItemRequest) = libraryService.create(req, userId())
 
     @PutMapping("/{id}")
-    fun update(@PathVariable id: Long, @RequestBody req: UpdateLibraryItemRequest) = libraryService.update(id, req)
+    fun update(@PathVariable id: Long, @RequestBody req: UpdateLibraryItemRequest) = libraryService.update(id, req, userId())
 
     @PostMapping("/{id}/image", consumes = ["multipart/form-data"])
     fun uploadImage(@PathVariable id: Long, @RequestParam("file") file: MultipartFile) =
-        libraryService.uploadImage(id, file)
+        libraryService.uploadImage(id, file, userId())
 
     @DeleteMapping("/{id}")
     fun delete(@PathVariable id: Long): ResponseEntity<Unit> {
-        libraryService.delete(id)
+        libraryService.delete(id, userId())
         return ResponseEntity.noContent().build()
     }
 }

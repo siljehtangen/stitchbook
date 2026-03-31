@@ -4,5 +4,6 @@ import com.stitchbud.model.LibraryItem
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface LibraryItemRepository : JpaRepository<LibraryItem, Long> {
-    fun findByOrderByCreatedAtDesc(): List<LibraryItem>
+    fun findByUserIdOrderByCreatedAtDesc(userId: String): List<LibraryItem>
+    fun findByUserId(userId: String): List<LibraryItem>
 }

@@ -76,6 +76,10 @@ class ProjectController(private val projectService: ProjectService) {
     fun uploadFile(@PathVariable id: Long, @RequestParam("file") file: MultipartFile) =
         projectService.uploadFile(id, file, userId())
 
+    @PostMapping("/{id}/files/register")
+    fun registerFile(@PathVariable id: Long, @RequestBody req: RegisterProjectFileRequest) =
+        projectService.registerFile(id, req, userId())
+
     @DeleteMapping("/{id}/files/{fileId}")
     fun deleteFile(@PathVariable id: Long, @PathVariable fileId: Long) =
         projectService.deleteFile(id, fileId, userId())

@@ -570,7 +570,7 @@ function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
     if (!file) return
     setUploading(true)
     try {
-      const updated = await projectsApi.uploadFile(projectId, file)
+      const updated = await projectsApi.uploadProjectFile(projectId, file)
       onUpdate(updated)
     } finally {
       setUploading(false)

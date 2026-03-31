@@ -17,13 +17,15 @@ import java.util.UUID
 @Transactional
 class LibraryService(
     private val libraryItemRepository: LibraryItemRepository,
+    private val storageService: SupabaseStorageService,
     @Value("\${app.upload-dir:./uploads}") private val uploadDir: String
 ) {
-    fun getAll(): List<LibraryItemDto> =
-        libraryItemRepository.findByOrderByCreatedAtDesc().map { it.toDto() }
+    fun getAll(userId: String): List<LibraryItemDto> =
+        libraryItemRepository.findByUserIdOrderByCreatedAtDesc(userId).map { it.toDto() }
 
-    fun create(req: CreateLibraryItemRequest): LibraryItemDto {
+    fun create(req: CreateLibraryItemRequest, userId: String): LibraryItemDto {
         val item = LibraryItem(
+            userId = userId,
             itemType = req.itemType,
             name = req.name,
             yarnMaterial = req.yarnMaterial,
@@ -39,9 +41,11 @@ class LibraryService(
         return libraryItemRepository.save(item).toDto()
     }
 
-    fun update(id: Long, req: UpdateLibraryItemRequest): LibraryItemDto {
+    fun update(id: Long, req: UpdateLibraryItemRequest, userId: String): LibraryItemDto {
         val item = libraryItemRepository.findById(id).orElseThrow { RuntimeException("Item not found") }
+        if (item.userId != userId) throw RuntimeException("Not found")
         req.name?.let { item.name = it }
+        req.imageUrl?.let { item.imageUrl = it }
         req.yarnMaterial?.let { item.yarnMaterial = it }
         req.yarnBrand?.let { item.yarnBrand = it }
         req.yarnAmountG?.let { item.yarnAmountG = it }
@@ -54,22 +58,34 @@ class LibraryService(
         return libraryItemRepository.save(item).toDto()
     }
 
-    fun uploadImage(id: Long, file: MultipartFile): LibraryItemDto {
+    fun uploadImage(id: Long, file: MultipartFile, userId: String): LibraryItemDto {
         val item = libraryItemRepository.findById(id).orElseThrow { RuntimeException("Item not found") }
+        if (item.userId != userId) throw RuntimeException("Not found")
         item.imageStoredName?.let { deleteImageFromDisk(it) }
         val ext = file.originalFilename?.substringAfterLast('.', "") ?: ""
         val storedName = "${UUID.randomUUID()}${if (ext.isNotEmpty()) ".$ext" else ""}"
-        val dir = Paths.get(uploadDir, "library")
+        val dir = Paths.get(uploadDir, "library").toAbsolutePath()
         Files.createDirectories(dir)
         file.transferTo(dir.resolve(storedName).toFile())
         item.imageStoredName = storedName
         return libraryItemRepository.save(item).toDto()
     }
 
-    fun delete(id: Long) {
+    fun delete(id: Long, userId: String) {
         val item = libraryItemRepository.findById(id).orElseThrow { RuntimeException("Item not found") }
+        if (item.userId != userId) throw RuntimeException("Not found")
+        item.imageUrl?.let { storageService.deleteByUrl(it) }
         item.imageStoredName?.let { deleteImageFromDisk(it) }
         libraryItemRepository.deleteById(id)
+    }
+
+    fun deleteAllForUser(userId: String) {
+        val items = libraryItemRepository.findByUserId(userId)
+        items.forEach { item ->
+            item.imageUrl?.let { storageService.deleteByUrl(it) }
+            item.imageStoredName?.let { deleteImageFromDisk(it) }
+        }
+        libraryItemRepository.deleteAll(items)
     }
 
     fun getImageFile(storedName: String): java.io.File =
@@ -83,7 +99,7 @@ class LibraryService(
         id = id,
         itemType = itemType,
         name = name,
-        imageUrl = imageStoredName?.let { "/api/library-images/$it" },
+        imageUrl = imageUrl ?: imageStoredName?.let { "/api/library-images/$it" },
         yarnMaterial = yarnMaterial,
         yarnBrand = yarnBrand,
         yarnAmountG = yarnAmountG,

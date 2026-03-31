@@ -19,6 +19,8 @@ class ProjectService(
     private val projectRepository: ProjectRepository,
     private val materialRepository: MaterialRepository,
     private val projectFileRepository: ProjectFileRepository,
+    private val storageService: SupabaseStorageService,
+    private val libraryService: LibraryService,
     @Value("\${app.upload-dir:./uploads}") private val uploadDir: String
 ) {
     fun getAllProjects(userId: String): List<ProjectDto> =
@@ -57,16 +59,25 @@ class ProjectService(
 
     fun deleteProject(id: Long, userId: String) {
         val project = projectRepository.findByIdAndUserId(id, userId).orElseThrow { RuntimeException("Project not found") }
-        project.files.forEach { deleteFileFromDisk(project.id, it.storedName) }
+        project.imageUrl?.let { storageService.deleteByUrl(it) }
+        project.files.forEach { file ->
+            if (file.storedName.startsWith("http")) storageService.deleteByUrl(file.storedName)
+            else deleteFileFromDisk(project.id, file.storedName)
+        }
         projectRepository.deleteById(id)
     }
 
     fun deleteAllUserData(userId: String) {
         val projects = projectRepository.findByUserIdOrderByUpdatedAtDesc(userId)
         projects.forEach { project ->
-            project.files.forEach { deleteFileFromDisk(project.id, it.storedName) }
+            project.imageUrl?.let { storageService.deleteByUrl(it) }
+            project.files.forEach { file ->
+                if (file.storedName.startsWith("http")) storageService.deleteByUrl(file.storedName)
+                else deleteFileFromDisk(project.id, file.storedName)
+            }
         }
         projectRepository.deleteAll(projects)
+        libraryService.deleteAllForUser(userId)
     }
 
     fun addMaterial(projectId: Long, req: AddMaterialRequest, userId: String): ProjectDto {
@@ -164,10 +175,31 @@ class ProjectService(
         return projectRepository.save(project).toDto()
     }
 
+    fun registerFile(projectId: Long, req: RegisterProjectFileRequest, userId: String): ProjectDto {
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
+        val ext = req.originalName.substringAfterLast('.', "").lowercase()
+        val fileType = when {
+            req.mimeType.startsWith("image/") -> "image"
+            req.mimeType == "application/pdf" || ext == "pdf" -> "pdf"
+            req.mimeType.contains("word") || ext == "docx" || ext == "doc" -> "word"
+            else -> "other"
+        }
+        val pf = ProjectFile(
+            originalName = req.originalName,
+            storedName = req.fileUrl,
+            mimeType = req.mimeType,
+            fileType = fileType,
+            project = project
+        )
+        project.files.add(pf)
+        project.updatedAt = System.currentTimeMillis()
+        return projectRepository.save(project).toDto()
+    }
+
     fun deleteFile(projectId: Long, fileId: Long, userId: String): ProjectDto {
         val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
         val pf = project.files.find { it.id == fileId } ?: throw RuntimeException("File not found")
-        deleteFileFromDisk(projectId, pf.storedName)
+        if (!pf.storedName.startsWith("http")) deleteFileFromDisk(projectId, pf.storedName)
         project.files.removeIf { it.id == fileId }
         project.updatedAt = System.currentTimeMillis()
         return projectRepository.save(project).toDto()

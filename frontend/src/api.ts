@@ -2,6 +2,8 @@ import axios from 'axios'
 import type { Project, ProjectCategory, LibraryItem } from './types'
 import { supabase } from './supabase'
 
+const STORAGE_BUCKET = 'stitchbud-files'
+
 const api = axios.create({ baseURL: '/api' })
 
 api.interceptors.request.use(async config => {
@@ -12,6 +14,15 @@ api.interceptors.request.use(async config => {
   }
   return config
 })
+
+/** Upload a file to Supabase Storage and return its public URL. */
+export async function uploadFile(file: File, folder: string): Promise<string> {
+  const ext = file.name.split('.').pop()
+  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+  const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, { upsert: true })
+  if (error) throw error
+  return supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl
+}
 
 export const projectsApi = {
   getAll: (category?: ProjectCategory) =>
@@ -26,12 +37,9 @@ export const projectsApi = {
   update: (id: number, data: Partial<{ name: string; description: string; tags: string; imageUrl: string; notes: string; recipeText: string; craftDetails: string; startDate: number; endDate: number; clearEndDate: boolean }>) =>
     api.put<Project>(`/projects/${id}`, data).then(r => r.data),
 
-  uploadCoverImage: (id: number, file: File) => {
-    const form = new FormData()
-    form.append('file', file)
-    return api.post<Project>(`/projects/${id}/cover-image`, form, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    }).then(r => r.data)
+  uploadCoverImage: async (id: number, file: File): Promise<Project> => {
+    const publicUrl = await uploadFile(file, `project-covers/${id}`)
+    return api.put<Project>(`/projects/${id}`, { imageUrl: publicUrl }).then(r => r.data)
   },
 
   delete: (id: number) =>
@@ -55,11 +63,12 @@ export const projectsApi = {
   deletePatternGrid: (id: number, gridId: number) =>
     api.delete<Project>(`/projects/${id}/pattern-grids/${gridId}`).then(r => r.data),
 
-  uploadFile: (id: number, file: File) => {
-    const form = new FormData()
-    form.append('file', file)
-    return api.post<Project>(`/projects/${id}/files`, form, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+  uploadProjectFile: async (id: number, file: File): Promise<Project> => {
+    const publicUrl = await uploadFile(file, `project-files/${id}`)
+    return api.post<Project>(`/projects/${id}/files/register`, {
+      originalName: file.name,
+      fileUrl: publicUrl,
+      mimeType: file.type || 'application/octet-stream'
     }).then(r => r.data)
   },
 
@@ -80,16 +89,13 @@ export const libraryApi = {
   }) =>
     api.post<LibraryItem>('/library', data).then(r => r.data),
 
-  uploadImage: (id: number, file: File) => {
-    const form = new FormData()
-    form.append('file', file)
-    return api.post<LibraryItem>(`/library/${id}/image`, form, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    }).then(r => r.data)
+  uploadImage: async (id: number, file: File): Promise<LibraryItem> => {
+    const publicUrl = await uploadFile(file, `library/${id}`)
+    return api.put<LibraryItem>(`/library/${id}`, { imageUrl: publicUrl }).then(r => r.data)
   },
 
   update: (id: number, data: {
-    name?: string
+    name?: string; imageUrl?: string
     yarnMaterial?: string; yarnBrand?: string; yarnAmountG?: number; yarnAmountM?: number
     fabricWidthCm?: number; fabricLengthCm?: number
     needleSizeMm?: string; circularLengthCm?: number
@@ -102,7 +108,7 @@ export const libraryApi = {
 }
 
 export const fileUrl = (projectId: number, storedName: string) =>
-  `/api/files/${projectId}/${storedName}`
+  storedName.startsWith('http') ? storedName : `/api/files/${projectId}/${storedName}`
 
 export const accountApi = {
   deleteAccount: () => api.delete('/projects/account'),

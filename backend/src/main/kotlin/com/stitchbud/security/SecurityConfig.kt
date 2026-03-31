@@ -46,7 +46,10 @@ class SecurityConfig {
             .csrf { it.disable() }
             .cors { it.configurationSource(corsConfigurationSource()) }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
-            .authorizeHttpRequests { it.anyRequest().authenticated() }
+            .authorizeHttpRequests {
+                it.requestMatchers("/api/library-images/**").permitAll()
+                it.anyRequest().authenticated()
+            }
             .oauth2ResourceServer { it.jwt { } }
         return http.build()
     }

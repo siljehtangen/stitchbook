@@ -7,6 +7,18 @@ import { PiYarnFill } from 'react-icons/pi'
 
 const ITEM_TYPES: LibraryItemType[] = ['YARN', 'FABRIC', 'KNITTING_NEEDLE', 'CROCHET_HOOK']
 
+const FILE_ACCEPT = 'image/*,.pdf,.doc,.docx'
+
+function isImageUrl(url: string) {
+  return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url)
+}
+
+function fileTypeIcon(url: string) {
+  if (/\.pdf$/i.test(url)) return '📄'
+  if (/\.(doc|docx)$/i.test(url)) return '📝'
+  return '📎'
+}
+
 const TYPE_ICONS: Record<LibraryItemType, React.ReactNode> = {
   YARN: <PiYarnFill className="text-sand-green-dark" />,
   FABRIC: <GiRolledCloth className="text-warm-gray" />,
@@ -257,14 +269,18 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
             title={t('lib_upload_image')}
           >
             {item.imageUrl ? (
-              <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+              isImageUrl(item.imageUrl) ? (
+                <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="flex items-center justify-center w-full h-full text-xl">{fileTypeIcon(item.imageUrl)}</span>
+              )
             ) : (
               <span className="flex items-center justify-center w-full h-full text-xl text-soft-brown/40">
                 {uploading ? '⏳' : '📷'}
               </span>
             )}
           </button>
-          <input ref={fileRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+          <input ref={fileRef} type="file" accept={FILE_ACCEPT} onChange={handleImageUpload} className="hidden" />
           <Field label={t('lib_name')} className="flex-1">
             <input
               className="input text-sm py-1.5 w-full"
@@ -332,11 +348,15 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
       <button
         onClick={() => fileRef.current?.click()}
         disabled={uploading}
-        className="w-14 h-14 rounded-xl flex-shrink-0 overflow-hidden border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors relative"
+        className="w-14 h-14 rounded-xl flex-shrink-0 overflow-hidden border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors"
         title={t('lib_upload_image')}
       >
         {item.imageUrl ? (
-          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+          isImageUrl(item.imageUrl) ? (
+            <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+          ) : (
+            <span className="flex items-center justify-center w-full h-full text-2xl">{fileTypeIcon(item.imageUrl)}</span>
+          )
         ) : (
           <span className="flex items-center justify-center w-full h-full text-2xl text-soft-brown/40">
             {uploading ? '⏳' : '📷'}
@@ -346,7 +366,7 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
       <input
         ref={fileRef}
         type="file"
-        accept="image/*"
+        accept={FILE_ACCEPT}
         onChange={handleImageUpload}
         className="hidden"
       />
@@ -535,12 +555,16 @@ function AddItemForm({ selectedType, onTypeChange, onCreated, onCancel }: {
           title={t('lib_upload_image')}
         >
           {imagePreview ? (
-            <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
+            imageFile?.type.startsWith('image/') ? (
+              <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
+            ) : (
+              <span className="flex items-center justify-center w-full h-full text-2xl">{fileTypeIcon(imageFile?.name ?? '')}</span>
+            )
           ) : (
             <span className="flex items-center justify-center w-full h-full text-2xl text-soft-brown/40">📷</span>
           )}
         </button>
-        <input ref={fileRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+        <input ref={fileRef} type="file" accept={FILE_ACCEPT} onChange={handleImageChange} className="hidden" />
         <span className="text-xs text-warm-gray">{imageFile ? imageFile.name : t('lib_upload_image')}</span>
       </div>
 
