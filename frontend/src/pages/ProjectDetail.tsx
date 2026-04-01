@@ -192,11 +192,11 @@ export default function ProjectDetail() {
             <button
               onClick={() => coverImageRef.current?.click()}
               disabled={uploadingCover}
-              className="w-full h-36 rounded-xl overflow-hidden border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors relative bg-soft-brown/10 flex items-center justify-center"
+              className="w-full rounded-xl overflow-hidden border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors relative bg-soft-brown/10 flex items-center justify-center min-h-[9rem]"
               title={t('upload_cover_image')}
             >
               {project.imageUrl ? (
-                <img src={project.imageUrl} alt={name} className="w-full h-full object-cover" />
+                <img src={project.imageUrl} alt={name} className="w-full h-auto object-contain rounded-xl" />
               ) : (
                 <span className="text-warm-gray text-sm">{uploadingCover ? t('uploading') : t('upload_cover_image')}</span>
               )}
@@ -596,11 +596,17 @@ function FilePreviewModal({ file, projectId, onClose }: {
 
         {file.fileType === 'image' ? (
           <>
-            <div className="overflow-auto rounded-lg w-full" style={{ maxHeight: '75vh' }}>
+            <div className="overflow-auto rounded-lg w-full flex items-center justify-center" style={{ maxHeight: '75vh' }}>
               <img
                 src={url}
                 alt={file.originalName}
-                style={{ width: `${zoom * 100}%`, minWidth: '100%', display: 'block' }}
+                style={{
+                  display: 'block',
+                  maxWidth: zoom === 1 ? '100%' : `${zoom * 100}%`,
+                  maxHeight: zoom === 1 ? '72vh' : undefined,
+                  width: zoom === 1 ? 'auto' : `${zoom * 100}%`,
+                  height: zoom === 1 ? 'auto' : undefined,
+                }}
                 className="rounded-lg"
               />
             </div>
