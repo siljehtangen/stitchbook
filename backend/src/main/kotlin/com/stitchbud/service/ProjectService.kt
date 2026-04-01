@@ -100,6 +100,7 @@ class ProjectService(
     fun deleteMaterial(projectId: Long, materialId: Long, userId: String): ProjectDto {
         val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
         project.materials.removeIf { it.id == materialId }
+        project.images.removeIf { it.section == "material" && it.materialId == materialId }
         project.updatedAt = System.currentTimeMillis()
         return projectRepository.save(project).toDto()
     }
@@ -187,7 +188,8 @@ class ProjectService(
         val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
         val materialId = req.materialId ?: throw RuntimeException("materialId required")
         project.materials.find { it.id == materialId } ?: throw RuntimeException("Material not found")
-        val matImages = project.images.filter { it.section == "material" && it.materialId == materialId }
+        val matImages = projectImageRepository.findByProject_Id(project.id)
+            .filter { it.section == "material" && it.materialId == materialId }
         if (matImages.size >= 3) throw RuntimeException("Maximum 3 images per material")
         val isFirst = matImages.isEmpty()
         val img = ProjectImage(storedName = req.fileUrl, originalName = req.originalName, section = "material", materialId = materialId, isMain = isFirst, project = project)
@@ -299,20 +301,27 @@ class ProjectService(
         try { Paths.get(uploadDir, projectId.toString(), storedName).toFile().delete() } catch (_: Exception) {}
     }
 
-    private fun Project.toDto() = ProjectDto(
-        id = id, name = name, description = description, category = category,
-        tags = tags, imageUrl = imageUrl, notes = notes, recipeText = recipeText, craftDetails = craftDetails,
-        coverImages = images.filter { it.section == "cover" }.map { ProjectImageDto(it.id, it.storedName, it.originalName, it.section, it.materialId, it.isMain, id) },
-        materials = materials.map { m ->
-            MaterialDto(m.id, m.name, m.type, m.itemType, m.color, m.colorHex, m.amount, m.unit, m.imageUrl,
-                images = images.filter { it.section == "material" && it.materialId == m.id }
-                    .map { ProjectImageDto(it.id, it.storedName, it.originalName, it.section, it.materialId, it.isMain, id) }
-            )
-        },
-        files = files.map { ProjectFileDto(it.id, it.originalName, it.storedName, it.mimeType, it.fileType, it.uploadedAt, id) },
-        rowCounter = rowCounter?.let { RowCounterDto(it.id, it.stitchesPerRound, it.totalRounds, it.checkedStitches) },
-        patternGrids = patternGrids.map { PatternGridDto(it.id, it.rows, it.cols, it.cellData) },
-        startDate = startDate, endDate = endDate,
-        createdAt = createdAt, updatedAt = updatedAt
-    )
+    private fun Project.toDto(): ProjectDto {
+        val allImages = projectImageRepository.findByProject_Id(id)
+        fun toImgDto(it: ProjectImage) =
+            ProjectImageDto(it.id, it.storedName, it.originalName, it.section, it.materialId, it.isMain, id)
+        return ProjectDto(
+            id = id, name = name, description = description, category = category,
+            tags = tags, imageUrl = imageUrl, notes = notes, recipeText = recipeText, craftDetails = craftDetails,
+            coverImages = allImages.filter { it.section == "cover" }.sortedBy { it.id }.map(::toImgDto),
+            materials = materials.map { m ->
+                val matImages = allImages
+                    .filter { it.section == "material" && it.materialId == m.id }
+                    .sortedBy { it.id }
+                MaterialDto(m.id, m.name, m.type, m.itemType, m.color, m.colorHex, m.amount, m.unit, m.imageUrl,
+                    images = matImages.map(::toImgDto)
+                )
+            },
+            files = files.map { ProjectFileDto(it.id, it.originalName, it.storedName, it.mimeType, it.fileType, it.uploadedAt, id) },
+            rowCounter = rowCounter?.let { RowCounterDto(it.id, it.stitchesPerRound, it.totalRounds, it.checkedStitches) },
+            patternGrids = patternGrids.map { PatternGridDto(it.id, it.rows, it.cols, it.cellData) },
+            startDate = startDate, endDate = endDate,
+            createdAt = createdAt, updatedAt = updatedAt
+        )
+    }
 }

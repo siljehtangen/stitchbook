@@ -2,8 +2,9 @@ import { useEffect, useState, useCallback, useRef, type ChangeEvent } from 'reac
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { projectsApi, libraryApi, fileUrl } from '../api'
+import { libraryItemImagesForProject, materialImageUrls, projectCoverImageUrls, uniqueImageUrls } from '../projectOverviewMedia'
 import { COLOR_MAP, COLOR_MAP_BY_HEX, getColorName } from '../colors'
-import type { Project, PatternCell, ProjectCategory, ProjectFile, LibraryItem, LibraryItemType, Material } from '../types'
+import type { Project, PatternCell, ProjectCategory, ProjectFile, LibraryItem, LibraryItemType } from '../types'
 import { PiToolboxFill } from 'react-icons/pi'
 import { FaCircleInfo } from 'react-icons/fa6'
 import { MdOutlineMenuBook } from 'react-icons/md'
@@ -287,13 +288,6 @@ function MaterialsTab({ project, projectId, onUpdate }: {
   const [newLibType, setNewLibType] = useState<LibraryItemType>('YARN')
   const [pendingItem, setPendingItem] = useState<LibraryItem | null>(null)
 
-  const [uploadingMaterialId, setUploadingMaterialId] = useState<number | null>(null)
-  const [materialImageError, setMaterialImageError] = useState('')
-  const materialImageRef = useRef<HTMLInputElement>(null)
-  const [pendingMaterialImgId, setPendingMaterialImgId] = useState<number | null>(null)
-  const [editingMaterial, setEditingMaterial] = useState<Material | null>(null)
-  const MAX_MATERIAL_IMAGES = 3
-
   function libraryItemThumbUrl(item: LibraryItem) {
     const main = item.images?.find(i => i.isMain) ?? item.images?.[0]
     return main?.storedName ?? item.imageUrl
@@ -358,38 +352,33 @@ function MaterialsTab({ project, projectId, onUpdate }: {
       type = item.hookSizeMm ? `${item.hookSizeMm} mm heklenål` : item.name
     }
     const colorHex = colorName ? (COLOR_MAP[colorName] ?? '') : ''
+    const libImgsRaw = libraryItemImagesForProject(item)
+    const seen = new Set<string>()
+    const libImgs = libImgsRaw.filter(x => {
+      if (!x.storedName || seen.has(x.storedName)) return false
+      seen.add(x.storedName)
+      return true
+    })
     setSaving(true)
     try {
-      const updated = await projectsApi.addMaterial(projectId, {
+      let updated = await projectsApi.addMaterial(projectId, {
         name: item.name, type, itemType: item.itemType, color: colorName, colorHex, amount, unit,
-        imageUrl: item.imageUrl,
+        imageUrl: libImgs[0]?.storedName,
       })
+      if (libImgs.length > 1) {
+        const newMat = updated.materials.reduce((a, b) => (a.id > b.id ? a : b))
+        for (let i = 1; i < libImgs.length; i++) {
+          updated = await projectsApi.registerMaterialImageByUrl(
+            projectId,
+            newMat.id,
+            libImgs[i].storedName,
+            libImgs[i].originalName || 'image',
+          )
+        }
+      }
       onUpdate(updated)
       setPendingItem(null)
     } finally { setSaving(false) }
-  }
-
-  async function handleMaterialImageUpload(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file || pendingMaterialImgId === null) return
-    setMaterialImageError('')
-    setUploadingMaterialId(pendingMaterialImgId)
-    try {
-      const updated = await projectsApi.uploadMaterialImage(projectId, pendingMaterialImgId, file)
-      onUpdate(updated)
-      setEditingMaterial(prev => prev ? (updated.materials.find(m => m.id === prev.id) ?? null) : null)
-    } catch {
-      setMaterialImageError(t('upload_failed'))
-    } finally {
-      setUploadingMaterialId(null)
-      setPendingMaterialImgId(null)
-      if (materialImageRef.current) materialImageRef.current.value = ''
-    }
-  }
-
-  function startMaterialImageUpload(materialId: number) {
-    setPendingMaterialImgId(materialId)
-    materialImageRef.current?.click()
   }
 
   function handleLibItemCreated(item: LibraryItem) {
@@ -399,69 +388,6 @@ function MaterialsTab({ project, projectId, onUpdate }: {
 
   return (
     <div className="space-y-3">
-      <input ref={materialImageRef} type="file" accept="image/png,image/jpeg,image/jpg" onChange={handleMaterialImageUpload} className="hidden" />
-
-      {/* Material edit modal */}
-      {editingMaterial && (
-        <div
-          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-          onClick={() => setEditingMaterial(null)}
-        >
-          <div
-            className="bg-white rounded-2xl p-5 w-full max-w-sm space-y-4"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <h3 className="font-semibold text-gray-800">{editingMaterial.type}</h3>
-                {(editingMaterial.amount || editingMaterial.unit) && (
-                  <p className="text-sm text-warm-gray">{editingMaterial.amount}{editingMaterial.amount && editingMaterial.unit ? ` ${editingMaterial.unit}` : ''}</p>
-                )}
-              </div>
-              <button onClick={() => setEditingMaterial(null)} className="text-warm-gray hover:text-red-400 text-2xl leading-none flex-shrink-0">×</button>
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              {(editingMaterial.images ?? []).map(img => (
-                <div key={img.id} className="relative group flex-shrink-0">
-                  <img
-                    src={img.storedName}
-                    alt={img.originalName}
-                    className={`w-20 h-20 object-cover rounded-xl border-2 transition-colors ${img.isMain ? 'border-sand-green' : 'border-transparent'}`}
-                  />
-                  <button
-                    onClick={async () => {
-                      const updated = await projectsApi.setMaterialImageMain(projectId, img.id)
-                      onUpdate(updated)
-                      setEditingMaterial(updated.materials.find(m => m.id === editingMaterial.id) ?? null)
-                    }}
-                    className={`absolute top-1 left-1 w-6 h-6 rounded-full text-xs flex items-center justify-center transition-colors ${img.isMain ? 'bg-sand-green text-white' : 'bg-black/40 text-white hover:bg-sand-green'}`}
-                    title={img.isMain ? t('main_image') : t('set_as_main')}
-                  >★</button>
-                  <button
-                    onClick={async () => {
-                      const updated = await projectsApi.deleteMaterialImage(projectId, img.id)
-                      onUpdate(updated)
-                      setEditingMaterial(updated.materials.find(m => m.id === editingMaterial.id) ?? null)
-                    }}
-                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white text-sm leading-none hidden group-hover:flex items-center justify-center transition-colors"
-                  >×</button>
-                </div>
-              ))}
-              {(editingMaterial.images ?? []).length < MAX_MATERIAL_IMAGES && (
-                <button
-                  onClick={() => startMaterialImageUpload(editingMaterial.id)}
-                  disabled={uploadingMaterialId === editingMaterial.id}
-                  className="w-20 h-20 rounded-xl border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors bg-soft-brown/10 flex flex-col items-center justify-center gap-1 text-warm-gray flex-shrink-0"
-                >
-                  <span className="text-xl leading-none">{uploadingMaterialId === editingMaterial.id ? '…' : '+'}</span>
-                  <span className="text-xs text-center px-1">{uploadingMaterialId === editingMaterial.id ? t('uploading') : t('upload_cover_image')}</span>
-                </button>
-              )}
-            </div>
-            {materialImageError && <p className="text-xs text-red-500">{materialImageError}</p>}
-          </div>
-        </div>
-      )}
       {project.materials.length === 0 && (
         <p className="text-sm text-warm-gray text-center py-2">{t('no_materials_yet')}</p>
       )}
@@ -471,20 +397,16 @@ function MaterialsTab({ project, projectId, onUpdate }: {
         return (
           <div key={m.id} className="card">
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                onClick={() => setEditingMaterial(m)}
-              >
+              <div className="flex items-center gap-2 flex-1 min-w-0 min-h-[3rem]">
                 {thumbSrc ? (
                   <img
                     src={thumbSrc}
                     alt={mainImg?.originalName ?? m.name}
-                    className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                    className="w-12 h-12 object-cover rounded-lg flex-shrink-0 pointer-events-none select-none"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-lg border-2 border-dashed border-soft-brown/30 bg-soft-brown/10 flex items-center justify-center text-warm-gray flex-shrink-0">
-                    <span className="text-xl leading-none">+</span>
+                  <div className="w-12 h-12 rounded-lg bg-soft-brown/20 flex items-center justify-center text-warm-gray flex-shrink-0 text-base pointer-events-none select-none" aria-hidden>
+                    {m.itemType ? TYPE_ICONS[m.itemType as LibraryItemType] : '·'}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
@@ -493,10 +415,12 @@ function MaterialsTab({ project, projectId, onUpdate }: {
                     <p className="text-xs text-warm-gray">{m.amount}{m.amount && m.unit ? ` ${m.unit}` : ''}</p>
                   )}
                 </div>
-              </button>
+              </div>
               <button
+                type="button"
                 onClick={async () => onUpdate(await projectsApi.deleteMaterial(projectId, m.id))}
                 className="text-warm-gray hover:text-red-400 text-xl px-1 leading-none flex-shrink-0"
+                title={t('delete')}
               >×</button>
             </div>
           </div>
@@ -975,12 +899,13 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
       .map(f => ({ key: f.key, label: t(f.labelKey as Parameters<typeof t>[0]) }))
 
     // Collect all image URLs that need to be embedded in the PDF
-    const imageUrls: string[] = []
-    if (project.imageUrl) imageUrls.push(project.imageUrl)
-    project.materials.forEach(m => { if (m.imageUrl) imageUrls.push(m.imageUrl) })
-    project.files
-      .filter(f => f.fileType === 'image')
-      .forEach(f => imageUrls.push(fileUrl(projectId, f.storedName)))
+    const imageUrls = uniqueImageUrls([
+      ...projectCoverImageUrls(project),
+      ...project.materials.flatMap(materialImageUrls),
+      ...project.files
+        .filter(f => f.fileType === 'image')
+        .map(f => fileUrl(projectId, f.storedName)),
+    ])
 
     // Convert each image to a JPEG data URI via canvas — the only reliable way
     // to embed external images in react-pdf v4 browser mode
@@ -1026,6 +951,7 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
   const craftFields = CRAFT_FIELDS_KEYS[project.category] ?? []
   const filledCraftFields = craftFields.filter(f => craftDetails[f.key]?.trim())
   const hasMaterials = project.materials.length > 0
+  const coverUrls = projectCoverImageUrls(project)
 
   return (
     <div className="space-y-5">
@@ -1035,13 +961,17 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
         </button>
       </div>
       <Section title={t('section_info')}>
-        <div className="flex gap-4 items-start">
-          <div className="flex-1">
+        <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 sm:items-start">
+          <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-gray-800 text-base">{name}</h3>
             {description && <p className="text-sm text-gray-700 whitespace-pre-wrap mt-1">{description}</p>}
           </div>
-          {project.imageUrl && (
-            <img src={project.imageUrl} alt={name} className="w-28 h-28 object-cover rounded-xl flex-shrink-0" />
+          {coverUrls.length > 0 && (
+            <div className="flex gap-2 flex-wrap sm:justify-end">
+              {coverUrls.map((url, i) => (
+                <img key={i} src={url} alt="" className="w-28 h-28 object-cover rounded-xl flex-shrink-0 shadow-sm" />
+              ))}
+            </div>
           )}
         </div>
       </Section>
@@ -1059,15 +989,28 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
             </div>
           )}
           {hasMaterials && (
-            <div className="space-y-2">
+            <div className="space-y-4">
               {project.materials.map(m => {
                 const colorEntry = m.colorHex ? COLOR_MAP_BY_HEX[m.colorHex] : undefined
                 const colorLabel = colorEntry ? getColorName(colorEntry, i18n.language) : m.color
+                const imgs = materialImageUrls(m, projectId)
                 return (
-                  <div key={m.id}>
-                    <span className="text-sm text-gray-700">
+                  <div key={m.id} className="space-y-2">
+                    <span className="text-sm text-gray-700 block font-medium">
                       {m.type}{colorLabel ? ` — ${colorLabel}` : ''}{m.amount ? ` (${m.amount}${m.unit ? ` ${m.unit}` : ''})` : ''}
                     </span>
+                    {imgs.length > 0 ? (
+                      <div className="flex gap-2 flex-wrap">
+                        {imgs.map((url, i) => (
+                          <img
+                            key={`${url}-${i}`}
+                            src={url}
+                            alt=""
+                            className="w-28 h-28 object-cover rounded-xl flex-shrink-0 shadow-sm pointer-events-none select-none"
+                          />
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 )
               })}

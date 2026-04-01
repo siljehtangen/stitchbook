@@ -2,6 +2,7 @@ import { Document, Page, Text, View, StyleSheet, Image, Link } from '@react-pdf/
 import type { Project, PatternCell } from '../types'
 import { COLOR_MAP_BY_HEX, getColorName } from '../colors'
 import { fileUrl } from '../api'
+import { materialImageUrls, projectCoverImageUrls } from '../projectOverviewMedia'
 
 const accent = '#6FA8BC'
 
@@ -21,8 +22,9 @@ const S = StyleSheet.create({
   craftField: { width: '50%', marginBottom: 5 },
   fieldLabel: { fontSize: 7.5, color: '#888', marginBottom: 1 },
   fieldValue: { fontSize: 9.5, color: '#555' },
-  matRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 },
-  matImage: { width: 40, height: 40, objectFit: 'cover', marginRight: 8 },
+  matBlock: { marginBottom: 10 },
+  matThumbs: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 4 },
+  matImage: { width: 72, height: 72, objectFit: 'cover', marginRight: 6, marginBottom: 6 },
   matText: { fontSize: 9.5 },
   recipeImage: { width: '100%', height: 250, objectFit: 'contain', marginBottom: 8 },
   attachment: { fontSize: 9, color: '#888', marginBottom: 3 },
@@ -65,6 +67,8 @@ export function ProjectOverviewPdf({
   const hasMaterials = filledCraftFields.length > 0 || project.materials.length > 0
   const hasRecipe = !!recipeText
 
+  const coverUrls = projectCoverImageUrls(project)
+
   const imageFiles = project.files.filter(f => f.fileType === 'image')
   const nonImageFiles = project.files.filter(f => f.fileType !== 'image')
   const hasFiles = project.files.length > 0
@@ -93,9 +97,9 @@ export function ProjectOverviewPdf({
         <Text style={S.h1}>{name}</Text>
         <Text style={S.meta}>{categoryLabel}</Text>
 
-        {project.imageUrl ? (
-          <Image src={img(project.imageUrl)} style={S.coverImage} />
-        ) : null}
+        {coverUrls.map((url, i) => (
+          <Image key={i} src={img(url)} style={S.coverImage} />
+        ))}
 
         {description ? (
           <View style={S.section}>
@@ -120,11 +124,16 @@ export function ProjectOverviewPdf({
             {project.materials.map(m => {
               const colorEntry = m.colorHex ? COLOR_MAP_BY_HEX[m.colorHex] : undefined
               const colorLabel = colorEntry ? getColorName(colorEntry, language) : m.color
+              const matUrls = materialImageUrls(m, projectId)
               return (
-                <View key={m.id} style={S.matRow}>
-                  {m.imageUrl ? (
-                    <Image src={img(m.imageUrl)} style={S.matImage} />
-                  ) : null}
+                <View key={m.id} style={S.matBlock}>
+                  {matUrls.length > 0 && (
+                    <View style={S.matThumbs}>
+                      {matUrls.map((url, i) => (
+                        <Image key={i} src={img(url)} style={S.matImage} />
+                      ))}
+                    </View>
+                  )}
                   <Text style={S.matText}>
                     {m.type}{colorLabel ? ` \u2014 ${colorLabel}` : ''}{m.amount ? ` (${m.amount}${m.unit ? ` ${m.unit}` : ''})` : ''}
                   </Text>
