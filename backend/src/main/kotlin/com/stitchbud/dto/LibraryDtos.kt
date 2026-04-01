@@ -1,10 +1,19 @@
 package com.stitchbud.dto
 
+data class LibraryItemImageDto(
+    val id: Long = 0,
+    val storedName: String,
+    val originalName: String,
+    val isMain: Boolean,
+    val libraryItemId: Long
+)
+
 data class LibraryItemDto(
     val id: Long = 0,
     val itemType: String,
     val name: String,
     val imageUrl: String? = null,
+    val images: List<LibraryItemImageDto> = emptyList(),
     val colors: List<String> = emptyList(),
     val yarnMaterial: String? = null,
     val yarnBrand: String? = null,
@@ -46,4 +55,9 @@ data class CreateLibraryItemRequest(
     val needleSizeMm: String? = null,
     val circularLengthCm: Int? = null,
     val hookSizeMm: String? = null
+)
+
+data class RegisterLibraryImageRequest(
+    val originalName: String,
+    val fileUrl: String
 )

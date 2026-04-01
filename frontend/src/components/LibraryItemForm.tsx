@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { libraryApi } from '../api'
 import type { LibraryItem, LibraryItemType } from '../types'
@@ -91,11 +91,10 @@ export function ColorPicker({ selected, onChange }: {
   )
 }
 
-function fileTypeIcon(url: string) {
-  if (/\.pdf$/i.test(url)) return '📄'
-  if (/\.(doc|docx)$/i.test(url)) return '📝'
-  return '📎'
-}
+export const MAX_LIBRARY_PHOTOS = 3
+export const LIBRARY_PHOTO_ACCEPT = 'image/png,image/jpeg,image/jpg'
+
+type LibraryPhotoEntry = { file: File; preview: string; isMain: boolean }
 
 interface LibraryItemFormProps {
   selectedType: LibraryItemType
@@ -108,10 +107,9 @@ interface LibraryItemFormProps {
 
 export function LibraryItemForm({ selectedType, onTypeChange, onCreated, onCancel, hideImageUpload }: LibraryItemFormProps) {
   const { t } = useTranslation()
-  const fileRef = useRef<HTMLInputElement>(null)
+  const photoRef = useRef<HTMLInputElement>(null)
   const [saving, setSaving] = useState(false)
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [libraryPhotos, setLibraryPhotos] = useState<LibraryPhotoEntry[]>([])
 
   const [name, setName] = useState('')
   const [colors, setColors] = useState<string[]>([])
@@ -127,11 +125,33 @@ export function LibraryItemForm({ selectedType, onTypeChange, onCreated, onCance
 
   const hasColors = COLOR_ITEM_TYPES.includes(selectedType)
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function clearLibraryPhotos() {
+    setLibraryPhotos(prev => {
+      prev.forEach(p => URL.revokeObjectURL(p.preview))
+      return []
+    })
+  }
+
+  function handlePhotoChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (!file) return
-    setImageFile(file)
-    setImagePreview(URL.createObjectURL(file))
+    if (!file || libraryPhotos.length >= MAX_LIBRARY_PHOTOS) return
+    const preview = URL.createObjectURL(file)
+    setLibraryPhotos(prev => [...prev, { file, preview, isMain: prev.length === 0 }])
+    if (photoRef.current) photoRef.current.value = ''
+  }
+
+  function setPhotoMain(index: number) {
+    setLibraryPhotos(prev => prev.map((img, i) => ({ ...img, isMain: i === index })))
+  }
+
+  function removePhoto(index: number) {
+    setLibraryPhotos(prev => {
+      const wasMain = prev[index].isMain
+      URL.revokeObjectURL(prev[index].preview)
+      const next = prev.filter((_, i) => i !== index)
+      if (wasMain && next.length > 0) next[0] = { ...next[0], isMain: true }
+      return next
+    })
   }
 
   function autoName() {
@@ -152,6 +172,7 @@ export function LibraryItemForm({ selectedType, onTypeChange, onCreated, onCance
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    const staged = [...libraryPhotos]
     setSaving(true)
     try {
       const finalName = name.trim() || autoName()
@@ -169,10 +190,20 @@ export function LibraryItemForm({ selectedType, onTypeChange, onCreated, onCance
         circularLengthCm: selectedType === 'KNITTING_NEEDLE' && circularLength ? parseInt(circularLength) : undefined,
         hookSizeMm: selectedType === 'CROCHET_HOOK' ? hookSize || undefined : undefined,
       })
-      if (imageFile) {
-        item = await libraryApi.uploadImage(item.id, imageFile)
+      if (!hideImageUpload && staged.length > 0) {
+        const main = staged.find(img => img.isMain)
+        const others = staged.filter(img => !img.isMain)
+        let updated = item
+        if (main) updated = await libraryApi.registerLibraryImage(item.id, main.file)
+        for (const img of others) {
+          updated = await libraryApi.registerLibraryImage(item.id, img.file)
+        }
+        staged.forEach(p => URL.revokeObjectURL(p.preview))
+        setLibraryPhotos([])
+        onCreated(updated)
+      } else {
+        onCreated(item)
       }
-      onCreated(item)
     } finally {
       setSaving(false)
     }
@@ -186,7 +217,11 @@ export function LibraryItemForm({ selectedType, onTypeChange, onCreated, onCance
           <button
             key={type}
             type="button"
-            onClick={() => { onTypeChange(type); setColors([]) }}
+            onClick={() => {
+              onTypeChange(type)
+              setColors([])
+              clearLibraryPhotos()
+            }}
             className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
               selectedType === type ? 'bg-sand-green text-gray-800' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
             }`}
@@ -258,25 +293,41 @@ export function LibraryItemForm({ selectedType, onTypeChange, onCreated, onCance
       </Field>
 
       {!hideImageUpload && (
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            className="w-14 h-14 rounded-xl flex-shrink-0 overflow-hidden border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors"
-            title={t('lib_upload_image')}
-          >
-            {imagePreview ? (
-              imageFile?.type.startsWith('image/') ? (
-                <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
-              ) : (
-                <span className="flex items-center justify-center w-full h-full text-2xl">{fileTypeIcon(imageFile?.name ?? '')}</span>
-              )
-            ) : (
-              <span className="flex items-center justify-center w-full h-full text-2xl text-soft-brown/40">📷</span>
+        <div className="space-y-2">
+          <p className="text-xs text-warm-gray">{t('material_photos_hint')}</p>
+          <div className="flex gap-2 flex-wrap">
+            {libraryPhotos.map((img, i) => (
+              <div key={i} className="relative group flex-shrink-0">
+                <img
+                  src={img.preview}
+                  alt=""
+                  className={`w-24 h-24 object-cover rounded-xl border-2 transition-colors ${img.isMain ? 'border-sand-green' : 'border-transparent'}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setPhotoMain(i)}
+                  className={`absolute top-1 left-1 w-6 h-6 rounded-full text-xs flex items-center justify-center transition-colors ${img.isMain ? 'bg-sand-green text-white' : 'bg-black/40 text-white hover:bg-sand-green'}`}
+                  title={img.isMain ? t('main_image') : t('set_as_main')}
+                >★</button>
+                <button
+                  type="button"
+                  onClick={() => removePhoto(i)}
+                  className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white text-sm leading-none hidden group-hover:flex items-center justify-center transition-colors"
+                >×</button>
+              </div>
+            ))}
+            {libraryPhotos.length < MAX_LIBRARY_PHOTOS && (
+              <button
+                type="button"
+                onClick={() => photoRef.current?.click()}
+                className="w-24 h-24 rounded-xl border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors bg-soft-brown/10 flex flex-col items-center justify-center gap-1 text-warm-gray flex-shrink-0"
+              >
+                <span className="text-xl leading-none">+</span>
+                <span className="text-xs text-center px-1">{t('upload_cover_image')}</span>
+              </button>
             )}
-          </button>
-          <input ref={fileRef} type="file" accept={FILE_ACCEPT} onChange={handleImageChange} className="hidden" />
-          <span className="text-xs text-warm-gray">{imageFile ? imageFile.name : t('lib_upload_image')}</span>
+          </div>
+          <input ref={photoRef} type="file" accept={LIBRARY_PHOTO_ACCEPT} onChange={handlePhotoChange} className="hidden" />
         </div>
       )}
 

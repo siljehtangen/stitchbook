@@ -3,7 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { libraryApi } from '../api'
 import type { LibraryItem, LibraryItemType } from '../types'
 import { COLOR_MAP, COLOR_MAP_BY_HEX, getColorName } from '../colors'
-import { ITEM_TYPES, COLOR_ITEM_TYPES, FILE_ACCEPT, TYPE_ICONS, Field, ColorPicker, LibraryItemForm } from '../components/LibraryItemForm'
+import { ITEM_TYPES, COLOR_ITEM_TYPES, TYPE_ICONS, Field, ColorPicker, LibraryItemForm, MAX_LIBRARY_PHOTOS, LIBRARY_PHOTO_ACCEPT } from '../components/LibraryItemForm'
+
+function libraryDisplayImageUrl(item: { imageUrl?: string; images?: { storedName: string; isMain: boolean }[] }) {
+  const main = item.images?.find(i => i.isMain) ?? item.images?.[0]
+  return main?.storedName ?? item.imageUrl
+}
 
 function isImageUrl(url: string) {
   return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url)
@@ -275,10 +280,10 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (!file) return
+    if (!file || (item.images?.length ?? 0) >= MAX_LIBRARY_PHOTOS) return
     setUploading(true)
     try {
-      const updated = await libraryApi.uploadImage(item.id, file)
+      const updated = await libraryApi.registerLibraryImage(item.id, file)
       onImageUploaded(updated)
     } finally {
       setUploading(false)
@@ -309,38 +314,66 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
     }
   }
 
+  const displayUrl = libraryDisplayImageUrl(item)
+
   if (editing) {
     return (
       <div className="card space-y-3">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            className="w-12 h-12 rounded-xl flex-shrink-0 overflow-hidden border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors"
-            title={t('lib_upload_image')}
-          >
-            {item.imageUrl ? (
-              isImageUrl(item.imageUrl) ? (
-                <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-              ) : (
-                <span className="flex items-center justify-center w-full h-full text-xl">{fileTypeIcon(item.imageUrl)}</span>
-              )
-            ) : (
-              <span className="flex items-center justify-center w-full h-full text-xl text-soft-brown/40">
-                {uploading ? '⏳' : '📷'}
-              </span>
+        <div className="space-y-2">
+          <p className="text-xs text-warm-gray">{t('material_photos_hint')}</p>
+          <div className="flex gap-2 flex-wrap items-start">
+            {(item.images ?? []).length === 0 && displayUrl && (
+              <div className="flex-shrink-0" title={t('main_image')}>
+                {isImageUrl(displayUrl) ? (
+                  <img src={displayUrl} alt="" className="w-14 h-14 object-cover rounded-xl border-2 border-sand-green" />
+                ) : (
+                  <div className="w-14 h-14 rounded-xl border-2 border-sand-green flex items-center justify-center text-lg">{fileTypeIcon(displayUrl)}</div>
+                )}
+              </div>
             )}
-          </button>
-          <input ref={fileRef} type="file" accept={FILE_ACCEPT} onChange={handleImageUpload} className="hidden" />
-          <Field label={t('lib_name')} className="flex-1">
-            <input
-              className="input text-sm py-1.5 w-full"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder={t('lib_name')}
-            />
-          </Field>
+            {(item.images ?? []).map(img => (
+              <div key={img.id} className="relative group flex-shrink-0">
+                {isImageUrl(img.storedName) ? (
+                  <img src={img.storedName} alt={img.originalName} className={`w-14 h-14 object-cover rounded-xl border-2 ${img.isMain ? 'border-sand-green' : 'border-transparent'}`} />
+                ) : (
+                  <div className={`w-14 h-14 rounded-xl border-2 flex items-center justify-center text-lg ${img.isMain ? 'border-sand-green' : 'border-soft-brown/30'}`}>{fileTypeIcon(img.storedName)}</div>
+                )}
+                <button
+                  type="button"
+                  onClick={async () => onUpdated(await libraryApi.setLibraryImageMain(item.id, img.id))}
+                  className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full text-xs flex items-center justify-center transition-colors ${img.isMain ? 'bg-sand-green text-white' : 'bg-black/40 text-white hover:bg-sand-green'}`}
+                  title={img.isMain ? t('main_image') : t('set_as_main')}
+                >★</button>
+                <button
+                  type="button"
+                  onClick={async () => onUpdated(await libraryApi.deleteLibraryImage(item.id, img.id))}
+                  className="absolute top-0.5 right-0.5 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white text-sm leading-none hidden group-hover:flex items-center justify-center transition-colors"
+                >×</button>
+              </div>
+            ))}
+            {(item.images ?? []).length < MAX_LIBRARY_PHOTOS && (
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="w-14 h-14 rounded-xl border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors bg-soft-brown/10 flex flex-col items-center justify-center gap-0.5 text-warm-gray flex-shrink-0"
+                title={t('lib_upload_image')}
+              >
+                <span className="text-lg leading-none">{uploading ? '…' : '+'}</span>
+                <span className="text-[10px] text-center px-0.5 leading-tight">{t('upload_cover_image')}</span>
+              </button>
+            )}
+          </div>
+          <input ref={fileRef} type="file" accept={LIBRARY_PHOTO_ACCEPT} onChange={handleImageUpload} className="hidden" />
         </div>
+        <Field label={t('lib_name')}>
+          <input
+            className="input text-sm py-1.5 w-full"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder={t('lib_name')}
+          />
+        </Field>
 
         {/* Color picker for yarn/fabric */}
         {hasColors && (
@@ -425,7 +458,7 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
       <input
         ref={fileRef}
         type="file"
-        accept={FILE_ACCEPT}
+        accept={LIBRARY_PHOTO_ACCEPT}
         onChange={handleImageUpload}
         className="hidden"
       />

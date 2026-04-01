@@ -27,5 +27,7 @@ data class LibraryItem(
     var hookSizeMm: String? = null,
     // Colors (comma-separated list, applicable for YARN and FABRIC)
     var colors: String? = null,
+    @OneToMany(mappedBy = "libraryItem", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
+    var images: MutableList<LibraryItemImage> = mutableListOf(),
     var createdAt: Long = System.currentTimeMillis()
 )

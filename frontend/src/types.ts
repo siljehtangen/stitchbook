@@ -2,11 +2,20 @@ export type ProjectCategory = 'KNITTING' | 'CROCHET' | 'SEWING'
 
 export type LibraryItemType = 'YARN' | 'FABRIC' | 'KNITTING_NEEDLE' | 'CROCHET_HOOK'
 
+export interface LibraryItemImage {
+  id: number
+  storedName: string
+  originalName: string
+  isMain: boolean
+  libraryItemId: number
+}
+
 export interface LibraryItem {
   id: number
   itemType: LibraryItemType
   name: string
   imageUrl?: string
+  images?: LibraryItemImage[]
   colors: string[]
   // Yarn
   yarnMaterial?: string

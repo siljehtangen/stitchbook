@@ -97,7 +97,7 @@ export default function NewProject() {
                 type="button"
                 onClick={() => setMainImage(i)}
                 className={`absolute top-1 left-1 w-6 h-6 rounded-full text-xs flex items-center justify-center transition-colors ${img.isMain ? 'bg-sand-green text-white' : 'bg-black/40 text-white hover:bg-sand-green'}`}
-                title={img.isMain ? 'Main image' : 'Set as main'}
+                title={img.isMain ? t('main_image') : t('set_as_main')}
               >★</button>
               <button
                 type="button"

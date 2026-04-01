@@ -123,6 +123,20 @@ export const libraryApi = {
     return api.put<LibraryItem>(`/library/${id}`, { imageUrl: publicUrl }).then(r => r.data)
   },
 
+  registerLibraryImage: async (id: number, file: File): Promise<LibraryItem> => {
+    const publicUrl = await uploadFile(file, `library/${id}`)
+    return api.post<LibraryItem>(`/library/${id}/images/register`, {
+      originalName: file.name,
+      fileUrl: publicUrl,
+    }).then(r => r.data)
+  },
+
+  setLibraryImageMain: (libraryItemId: number, imageId: number): Promise<LibraryItem> =>
+    api.put<LibraryItem>(`/library/${libraryItemId}/images/${imageId}/main`).then(r => r.data),
+
+  deleteLibraryImage: (libraryItemId: number, imageId: number): Promise<LibraryItem> =>
+    api.delete<LibraryItem>(`/library/${libraryItemId}/images/${imageId}`).then(r => r.data),
+
   update: (id: number, data: {
     name?: string; imageUrl?: string; colors?: string[]
     yarnMaterial?: string; yarnBrand?: string; yarnAmountG?: number; yarnAmountM?: number

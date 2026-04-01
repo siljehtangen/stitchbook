@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { projectsApi, libraryApi, fileUrl } from '../api'
 import { COLOR_MAP, COLOR_MAP_BY_HEX, getColorName } from '../colors'
-import type { Project, PatternCell, ProjectCategory, ProjectFile, LibraryItem, LibraryItemType, ProjectImage, Material } from '../types'
+import type { Project, PatternCell, ProjectCategory, ProjectFile, LibraryItem, LibraryItemType, Material } from '../types'
 import { PiToolboxFill } from 'react-icons/pi'
 import { FaCircleInfo } from 'react-icons/fa6'
 import { MdOutlineMenuBook } from 'react-icons/md'
@@ -201,7 +201,7 @@ export default function ProjectDetail() {
                   <button
                     onClick={async () => setProject(await projectsApi.setCoverImageMain(projectId, img.id))}
                     className={`absolute top-1 left-1 w-6 h-6 rounded-full text-xs flex items-center justify-center transition-colors ${img.isMain ? 'bg-sand-green text-white' : 'bg-black/40 text-white hover:bg-sand-green'}`}
-                    title={img.isMain ? 'Main image' : 'Set as main'}
+                    title={img.isMain ? t('main_image') : t('set_as_main')}
                   >★</button>
                   <button
                     onClick={async () => setProject(await projectsApi.deleteCoverImage(projectId, img.id))}
@@ -294,6 +294,11 @@ function MaterialsTab({ project, projectId, onUpdate }: {
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null)
   const MAX_MATERIAL_IMAGES = 3
 
+  function libraryItemThumbUrl(item: LibraryItem) {
+    const main = item.images?.find(i => i.isMain) ?? item.images?.[0]
+    return main?.storedName ?? item.imageUrl
+  }
+
   useEffect(() => {
     libraryApi.getAll().then(setLibraryItems)
   }, [])
@@ -355,7 +360,10 @@ function MaterialsTab({ project, projectId, onUpdate }: {
     const colorHex = colorName ? (COLOR_MAP[colorName] ?? '') : ''
     setSaving(true)
     try {
-      const updated = await projectsApi.addMaterial(projectId, { name: item.name, type, itemType: item.itemType, color: colorName, colorHex, amount, unit, imageUrl: item.imageUrl })
+      const updated = await projectsApi.addMaterial(projectId, {
+        name: item.name, type, itemType: item.itemType, color: colorName, colorHex, amount, unit,
+        imageUrl: item.imageUrl,
+      })
       onUpdate(updated)
       setPendingItem(null)
     } finally { setSaving(false) }
@@ -427,7 +435,7 @@ function MaterialsTab({ project, projectId, onUpdate }: {
                       setEditingMaterial(updated.materials.find(m => m.id === editingMaterial.id) ?? null)
                     }}
                     className={`absolute top-1 left-1 w-6 h-6 rounded-full text-xs flex items-center justify-center transition-colors ${img.isMain ? 'bg-sand-green text-white' : 'bg-black/40 text-white hover:bg-sand-green'}`}
-                    title={img.isMain ? 'Main image' : 'Set as main'}
+                    title={img.isMain ? t('main_image') : t('set_as_main')}
                   >★</button>
                   <button
                     onClick={async () => {
@@ -459,6 +467,7 @@ function MaterialsTab({ project, projectId, onUpdate }: {
       )}
       {project.materials.map(m => {
         const mainImg = m.images?.find(img => img.isMain) ?? m.images?.[0]
+        const thumbSrc = mainImg?.storedName ?? m.imageUrl
         return (
           <div key={m.id} className="card">
             <div className="flex items-center gap-2">
@@ -467,10 +476,10 @@ function MaterialsTab({ project, projectId, onUpdate }: {
                 className="flex items-center gap-2 flex-1 min-w-0 text-left"
                 onClick={() => setEditingMaterial(m)}
               >
-                {mainImg ? (
+                {thumbSrc ? (
                   <img
-                    src={mainImg.storedName}
-                    alt={mainImg.originalName}
+                    src={thumbSrc}
+                    alt={mainImg?.originalName ?? m.name}
                     className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
                   />
                 ) : (
@@ -525,15 +534,19 @@ function MaterialsTab({ project, projectId, onUpdate }: {
         {pendingItem && (
           <div className="border border-sand-blue/40 rounded-lg p-3 space-y-2.5 bg-sand-blue/5">
             <div className="flex items-center gap-2">
-              {pendingItem.imageUrl ? (
-                <img src={pendingItem.imageUrl} alt={pendingItem.name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+              {libraryItemThumbUrl(pendingItem) ? (
+                <img src={libraryItemThumbUrl(pendingItem)} alt={pendingItem.name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
               ) : (
                 <div className="w-8 h-8 rounded-lg bg-soft-brown/20 flex items-center justify-center flex-shrink-0 text-sm">
                   {TYPE_ICONS[pendingItem.itemType]}
                 </div>
               )}
               <p className="text-sm font-medium text-gray-800 flex-1 truncate">{pendingItem.name}</p>
-              <button type="button" onClick={() => setPendingItem(null)} className="text-warm-gray hover:text-red-400 text-lg leading-none">×</button>
+              <button
+                type="button"
+                onClick={() => setPendingItem(null)}
+                className="text-warm-gray hover:text-red-400 text-lg leading-none"
+              >×</button>
             </div>
             <div className="flex gap-2">
               <button
@@ -541,7 +554,7 @@ function MaterialsTab({ project, projectId, onUpdate }: {
                 disabled={saving}
                 onClick={() => addFromLibrary(pendingItem, '')}
                 className="btn-primary text-sm flex-1"
-              >{saving ? t('saving') : t('lib_add_item')}</button>
+              >{saving ? t('saving') : t('add_library_to_project')}</button>
               <button type="button" onClick={() => setPendingItem(null)} className="btn-ghost text-sm">{t('cancel')}</button>
             </div>
           </div>
@@ -557,8 +570,8 @@ function MaterialsTab({ project, projectId, onUpdate }: {
                 onClick={() => handleLibraryClick(item)}
                 className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-sand-green/20 transition-colors text-left"
               >
-                {item.imageUrl ? (
-                  <img src={item.imageUrl} alt={item.name} className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
+                {libraryItemThumbUrl(item) ? (
+                  <img src={libraryItemThumbUrl(item)} alt={item.name} className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
                 ) : (
                   <div className="w-9 h-9 rounded-lg bg-soft-brown/20 flex items-center justify-center flex-shrink-0 text-base">
                     {TYPE_ICONS[item.itemType]}
@@ -580,7 +593,6 @@ function MaterialsTab({ project, projectId, onUpdate }: {
               onTypeChange={setNewLibType}
               onCreated={handleLibItemCreated}
               onCancel={() => setCreatingInLib(false)}
-              hideImageUpload
             />
           ) : (
             <p className="text-xs text-warm-gray text-center">

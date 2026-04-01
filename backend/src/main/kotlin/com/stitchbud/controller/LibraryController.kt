@@ -1,6 +1,7 @@
 package com.stitchbud.controller
 
 import com.stitchbud.dto.CreateLibraryItemRequest
+import com.stitchbud.dto.RegisterLibraryImageRequest
 import com.stitchbud.dto.UpdateLibraryItemRequest
 import com.stitchbud.service.LibraryService
 import org.springframework.core.io.FileSystemResource
@@ -30,6 +31,18 @@ class LibraryController(private val libraryService: LibraryService) {
     @PostMapping("/{id}/image", consumes = ["multipart/form-data"])
     fun uploadImage(@PathVariable id: Long, @RequestParam("file") file: MultipartFile) =
         libraryService.uploadImage(id, file, userId())
+
+    @PostMapping("/{id}/images/register")
+    fun registerLibraryImage(@PathVariable id: Long, @RequestBody req: RegisterLibraryImageRequest) =
+        libraryService.registerLibraryImage(id, req, userId())
+
+    @PutMapping("/{id}/images/{imageId}/main")
+    fun setLibraryImageMain(@PathVariable id: Long, @PathVariable imageId: Long) =
+        libraryService.setLibraryImageMain(id, imageId, userId())
+
+    @DeleteMapping("/{id}/images/{imageId}")
+    fun deleteLibraryImage(@PathVariable id: Long, @PathVariable imageId: Long) =
+        libraryService.deleteLibraryImage(id, imageId, userId())
 
     @DeleteMapping("/{id}")
     fun delete(@PathVariable id: Long): ResponseEntity<Unit> {
