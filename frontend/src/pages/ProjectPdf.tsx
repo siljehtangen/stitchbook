@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 import type { Project, PatternCell } from '../types'
+import { COLOR_MAP_BY_HEX, getColorName } from '../colors'
 
 const accent = '#6FA8BC'
 
@@ -46,11 +47,12 @@ export interface PdfProps {
   projectId: number
   categoryLabel: string
   labels: PdfLabels
+  language: string
 }
 
 export function ProjectOverviewPdf({
   project, name, description, recipeText, filledCraftFields,
-  craftDetails, categoryLabel, labels,
+  craftDetails, categoryLabel, labels, language,
 }: PdfProps) {
   const hasMaterials = filledCraftFields.length > 0 || project.materials.length > 0
   const hasRecipe = !!recipeText
@@ -97,13 +99,17 @@ export function ProjectOverviewPdf({
                 ))}
               </View>
             )}
-            {project.materials.map(m => (
-              <View key={m.id} style={S.matRow}>
-                <Text style={S.matText}>
-                  {m.type}{m.color ? ` \u2014 ${m.color}` : ''}{m.amount ? ` (${m.amount}${m.unit ? ` ${m.unit}` : ''})` : ''}
-                </Text>
-              </View>
-            ))}
+            {project.materials.map(m => {
+              const colorEntry = m.colorHex ? COLOR_MAP_BY_HEX[m.colorHex] : undefined
+              const colorLabel = colorEntry ? getColorName(colorEntry, language) : m.color
+              return (
+                <View key={m.id} style={S.matRow}>
+                  <Text style={S.matText}>
+                    {m.type}{colorLabel ? ` \u2014 ${colorLabel}` : ''}{m.amount ? ` (${m.amount}${m.unit ? ` ${m.unit}` : ''})` : ''}
+                  </Text>
+                </View>
+              )
+            })}
           </View>
         ) : null}
 

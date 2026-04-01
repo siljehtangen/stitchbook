@@ -2,17 +2,13 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { projectsApi, libraryApi, fileUrl } from '../api'
+import { COLORS, COLOR_MAP, COLOR_MAP_BY_HEX, getColorName } from '../colors'
 import type { Project, PatternCell, ProjectCategory, ProjectFile, LibraryItem, LibraryItemType } from '../types'
-import { GiChopsticks, GiPirateHook, GiRolledCloth } from 'react-icons/gi'
-import { PiYarnFill, PiToolboxFill } from 'react-icons/pi'
+import { PiToolboxFill } from 'react-icons/pi'
 import { FaCircleInfo } from 'react-icons/fa6'
 import { MdOutlineMenuBook } from 'react-icons/md'
 import { BsStars, BsListStars } from 'react-icons/bs'
-
-const ITEM_TYPES: LibraryItemType[] = ['YARN', 'FABRIC', 'KNITTING_NEEDLE', 'CROCHET_HOOK']
-const TYPE_ICONS: Record<LibraryItemType, React.ReactNode> = {
-  YARN: <PiYarnFill className="text-sand-green-dark" />, FABRIC: <GiRolledCloth className="text-warm-gray" />, KNITTING_NEEDLE: <GiChopsticks className="text-sand-green-dark" />, CROCHET_HOOK: <GiPirateHook className="text-sand-blue-deep" />,
-}
+import { ITEM_TYPES, TYPE_ICONS, LibraryItemForm } from '../components/LibraryItemForm'
 
 // Gauge removed; only needle/hook sizes remain per category
 const CRAFT_FIELDS_KEYS: Record<string, { key: string; labelKey: string }[]> = {
@@ -266,13 +262,15 @@ export default function ProjectDetail() {
 function MaterialsTab({ project, projectId, onUpdate }: {
   project: Project; projectId: number; onUpdate: (p: Project) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([])
   const [filterType, setFilterType] = useState<LibraryItemType | null>(null)
   const [search, setSearch] = useState('')
   const [saving, setSaving] = useState(false)
   const [creatingInLib, setCreatingInLib] = useState(false)
   const [newLibType, setNewLibType] = useState<LibraryItemType>('YARN')
+  const [pendingItem, setPendingItem] = useState<LibraryItem | null>(null)
+  const [pendingColor, setPendingColor] = useState<string>('')
 
   useEffect(() => {
     libraryApi.getAll().then(setLibraryItems)
@@ -308,7 +306,16 @@ function MaterialsTab({ project, projectId, onUpdate }: {
     return ''
   }
 
-  async function addFromLibrary(item: LibraryItem) {
+  function handleLibraryClick(item: LibraryItem) {
+    if (item.itemType === 'YARN' || item.itemType === 'FABRIC') {
+      setPendingItem(item)
+      setPendingColor('')
+    } else {
+      addFromLibrary(item, '')
+    }
+  }
+
+  async function addFromLibrary(item: LibraryItem, colorName: string) {
     let type = item.name
     let amount = ''
     let unit = ''
@@ -324,10 +331,13 @@ function MaterialsTab({ project, projectId, onUpdate }: {
     } else if (item.itemType === 'CROCHET_HOOK') {
       type = item.hookSizeMm ? `${item.hookSizeMm} mm heklenål` : item.name
     }
+    const colorHex = colorName ? (COLOR_MAP[colorName] ?? '') : ''
     setSaving(true)
     try {
-      const updated = await projectsApi.addMaterial(projectId, { name: item.name, type, itemType: item.itemType, color: '', colorHex: '#C6D8B8', amount, unit, imageUrl: item.imageUrl })
+      const updated = await projectsApi.addMaterial(projectId, { name: item.name, type, itemType: item.itemType, color: colorName, colorHex, amount, unit, imageUrl: item.imageUrl })
       onUpdate(updated)
+      setPendingItem(null)
+      setPendingColor('')
     } finally { setSaving(false) }
   }
 
@@ -384,6 +394,51 @@ function MaterialsTab({ project, projectId, onUpdate }: {
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
+        {pendingItem && (
+          <div className="border border-sand-blue/40 rounded-lg p-3 space-y-2.5 bg-sand-blue/5">
+            <div className="flex items-center gap-2">
+              {pendingItem.imageUrl ? (
+                <img src={pendingItem.imageUrl} alt={pendingItem.name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+              ) : (
+                <div className="w-8 h-8 rounded-lg bg-soft-brown/20 flex items-center justify-center flex-shrink-0 text-sm">
+                  {TYPE_ICONS[pendingItem.itemType]}
+                </div>
+              )}
+              <p className="text-sm font-medium text-gray-800 flex-1 truncate">{pendingItem.name}</p>
+              <button type="button" onClick={() => setPendingItem(null)} className="text-warm-gray hover:text-red-400 text-lg leading-none">×</button>
+            </div>
+            <p className="text-xs text-warm-gray">{t('color_label')} ({t('optional')})</p>
+            <div className="flex flex-wrap gap-1.5">
+              {COLORS.map(color => {
+                const isSelected = pendingColor === color.name
+                return (
+                  <button
+                    key={color.name}
+                    type="button"
+                    title={getColorName(color, i18n.language)}
+                    onClick={() => setPendingColor(isSelected ? '' : color.name)}
+                    className={`w-7 h-7 rounded-full border-2 transition-all hover:scale-110 ${isSelected ? 'border-sand-blue-deep ring-2 ring-sand-blue-deep/40 scale-110' : 'border-black/10 hover:border-black/25'}`}
+                    style={{ backgroundColor: color.hex }}
+                  />
+                )
+              })}
+            </div>
+            {pendingColor && (
+              <p className="text-xs text-gray-600">
+                {getColorName(COLORS.find(c => c.name === pendingColor)!, i18n.language)}
+              </p>
+            )}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => addFromLibrary(pendingItem, pendingColor)}
+                className="btn-primary text-sm flex-1"
+              >{saving ? t('saving') : t('lib_add_item')}</button>
+              <button type="button" onClick={() => setPendingItem(null)} className="btn-ghost text-sm">{t('cancel')}</button>
+            </div>
+          </div>
+        )}
         <div className="space-y-1 max-h-64 overflow-y-auto">
           {filtered.length === 0 ? (
             <p className="text-sm text-warm-gray text-center py-3">{t('library_empty')}</p>
@@ -392,7 +447,7 @@ function MaterialsTab({ project, projectId, onUpdate }: {
               <button
                 key={item.id}
                 disabled={saving}
-                onClick={() => addFromLibrary(item)}
+                onClick={() => handleLibraryClick(item)}
                 className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-sand-green/20 transition-colors text-left"
               >
                 {item.imageUrl ? (
@@ -413,11 +468,12 @@ function MaterialsTab({ project, projectId, onUpdate }: {
         </div>
         <div className="border-t border-soft-brown/20 pt-2.5">
           {creatingInLib ? (
-            <QuickAddLibraryForm
+            <LibraryItemForm
               selectedType={newLibType}
               onTypeChange={setNewLibType}
               onCreated={handleLibItemCreated}
               onCancel={() => setCreatingInLib(false)}
+              hideImageUpload
             />
           ) : (
             <p className="text-xs text-warm-gray text-center">
@@ -435,131 +491,6 @@ function MaterialsTab({ project, projectId, onUpdate }: {
   )
 }
 
-// ── Quick Add Library Item (inline from project) ───────────────
-function QuickAddLibraryForm({ selectedType, onTypeChange, onCreated, onCancel }: {
-  selectedType: LibraryItemType
-  onTypeChange: (t: LibraryItemType) => void
-  onCreated: (item: LibraryItem) => void
-  onCancel: () => void
-}) {
-  const { t } = useTranslation()
-  const [saving, setSaving] = useState(false)
-  const [name, setName] = useState('')
-  const [yarnBrand, setYarnBrand] = useState('')
-  const [yarnMaterial, setYarnMaterial] = useState('')
-  const [yarnAmountG, setYarnAmountG] = useState('')
-  const [yarnAmountM, setYarnAmountM] = useState('')
-  const [fabricLength, setFabricLength] = useState('')
-  const [fabricWidth, setFabricWidth] = useState('')
-  const [needleSize, setNeedleSize] = useState('')
-  const [circularLength, setCircularLength] = useState('')
-  const [hookSize, setHookSize] = useState('')
-
-  const typeLabel = (type: LibraryItemType) => {
-    if (type === 'YARN') return t('lib_yarn')
-    if (type === 'FABRIC') return t('lib_fabric')
-    if (type === 'KNITTING_NEEDLE') return t('lib_knitting_needle')
-    if (type === 'CROCHET_HOOK') return t('lib_crochet_hook')
-    return type
-  }
-
-  function autoName() {
-    if (selectedType === 'KNITTING_NEEDLE' && needleSize) return `${needleSize} mm strikkepinne`
-    if (selectedType === 'CROCHET_HOOK' && hookSize) return `${hookSize} mm heklenål`
-    if (selectedType === 'YARN') return [yarnBrand, yarnMaterial].filter(Boolean).join(' ') || 'Garn'
-    if (selectedType === 'FABRIC') return 'Stoff'
-    return ''
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      const item = await libraryApi.create({
-        itemType: selectedType,
-        name: name.trim() || autoName(),
-        yarnBrand: selectedType === 'YARN' ? yarnBrand || undefined : undefined,
-        yarnMaterial: selectedType === 'YARN' ? yarnMaterial || undefined : undefined,
-        yarnAmountG: selectedType === 'YARN' && yarnAmountG ? parseInt(yarnAmountG) : undefined,
-        yarnAmountM: selectedType === 'YARN' && yarnAmountM ? parseInt(yarnAmountM) : undefined,
-        fabricLengthCm: selectedType === 'FABRIC' && fabricLength ? parseInt(fabricLength) : undefined,
-        fabricWidthCm: selectedType === 'FABRIC' && fabricWidth ? parseInt(fabricWidth) : undefined,
-        needleSizeMm: selectedType === 'KNITTING_NEEDLE' ? needleSize || undefined : undefined,
-        circularLengthCm: selectedType === 'KNITTING_NEEDLE' && circularLength ? parseInt(circularLength) : undefined,
-        hookSizeMm: selectedType === 'CROCHET_HOOK' ? hookSize || undefined : undefined,
-      })
-      onCreated(item)
-    } finally { setSaving(false) }
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-3 pt-1">
-      <div className="flex gap-1.5 flex-wrap">
-        {ITEM_TYPES.map(type => (
-          <button
-            key={type}
-            type="button"
-            onClick={() => onTypeChange(type)}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${selectedType === type ? 'bg-sand-green text-gray-800' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'}`}
-          >
-            <span>{TYPE_ICONS[type]}</span>
-            <span>{typeLabel(type)}</span>
-          </button>
-        ))}
-      </div>
-      {selectedType === 'YARN' && (
-        <div className="grid grid-cols-2 gap-2">
-          <Field label={t('lib_yarn_brand')}>
-            <input className="input text-sm py-1.5" value={yarnBrand} onChange={e => setYarnBrand(e.target.value)} placeholder="Sandnes Garn" />
-          </Field>
-          <Field label={t('lib_yarn_material')}>
-            <input className="input text-sm py-1.5" value={yarnMaterial} onChange={e => setYarnMaterial(e.target.value)} placeholder="Ull..." />
-          </Field>
-          <Field label={t('lib_yarn_amount_g')}>
-            <input type="number" className="input text-sm py-1.5" value={yarnAmountG} onChange={e => setYarnAmountG(e.target.value)} placeholder="100" />
-          </Field>
-          <Field label={t('lib_yarn_amount_m')}>
-            <input type="number" className="input text-sm py-1.5" value={yarnAmountM} onChange={e => setYarnAmountM(e.target.value)} placeholder="200" />
-          </Field>
-        </div>
-      )}
-      {selectedType === 'FABRIC' && (
-        <div className="grid grid-cols-2 gap-2">
-          <Field label={t('lib_fabric_length')}>
-            <input type="number" className="input text-sm py-1.5" value={fabricLength} onChange={e => setFabricLength(e.target.value)} placeholder="150" />
-          </Field>
-          <Field label={t('lib_fabric_width')}>
-            <input type="number" className="input text-sm py-1.5" value={fabricWidth} onChange={e => setFabricWidth(e.target.value)} placeholder="140" />
-          </Field>
-        </div>
-      )}
-      {selectedType === 'KNITTING_NEEDLE' && (
-        <div className="grid grid-cols-2 gap-2">
-          <Field label={t('lib_needle_size')}>
-            <input className="input text-sm py-1.5" value={needleSize} onChange={e => setNeedleSize(e.target.value)} placeholder="4.5" />
-          </Field>
-          <Field label={t('lib_circular_length')}>
-            <input type="number" className="input text-sm py-1.5" value={circularLength} onChange={e => setCircularLength(e.target.value)} placeholder="80" />
-          </Field>
-        </div>
-      )}
-      {selectedType === 'CROCHET_HOOK' && (
-        <Field label={t('lib_hook_size')}>
-          <input className="input text-sm py-1.5" value={hookSize} onChange={e => setHookSize(e.target.value)} placeholder="5.0" />
-        </Field>
-      )}
-      <Field label={`${t('lib_name')} (valgfritt)`}>
-        <input className="input text-sm py-1.5" value={name} onChange={e => setName(e.target.value)} placeholder={autoName() || t('lib_name')} />
-      </Field>
-      <div className="flex gap-2">
-        <button type="submit" disabled={saving} className="btn-primary text-sm flex-1">
-          {saving ? t('saving') : t('lib_add_item')}
-        </button>
-        <button type="button" onClick={onCancel} className="btn-ghost text-sm">{t('cancel')}</button>
-      </div>
-    </form>
-  )
-}
 
 // ── File Preview Modal ─────────────────────────────────────────
 function FilePreviewModal({ file, projectId, onClose }: {
@@ -882,7 +813,7 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
   project: Project; name: string; description: string; recipeText: string
   craftDetails: Record<string, string>; projectId: number
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const fileIcon = (ft: string) =>
     ({ image: '🖼️', pdf: '📄', word: '📝', other: '📎' } as Record<string, string>)[ft] ?? '📎'
 
@@ -907,6 +838,7 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
         craftDetails={craftDetails}
         projectId={projectId}
         categoryLabel={t(`category_${project.category.toLowerCase()}` as Parameters<typeof t>[0])}
+        language={i18n.language}
         labels={{
           info: t('section_info'),
           materials: t('section_materials'),
@@ -955,18 +887,17 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
           )}
           {hasMaterials && (
             <div className="space-y-2">
-              {project.materials.map(m => (
-                <div key={m.id} className="flex items-center gap-2.5">
-                  {m.imageUrl ? (
-                    <img src={m.imageUrl} alt={m.type} className="w-6 h-6 rounded object-cover flex-shrink-0 border border-soft-brown/20" />
-                  ) : (
-                    <div className="w-6 h-6 rounded flex-shrink-0 bg-soft-brown/20 flex items-center justify-center text-xs text-soft-brown/60">📷</div>
-                  )}
-                  <span className="text-sm text-gray-700">
-                    {m.type}{m.color ? ` — ${m.color}` : ''}{m.amount ? ` (${m.amount}${m.unit ? ` ${m.unit}` : ''})` : ''}
-                  </span>
-                </div>
-              ))}
+              {project.materials.map(m => {
+                const colorEntry = m.colorHex ? COLOR_MAP_BY_HEX[m.colorHex] : undefined
+                const colorLabel = colorEntry ? getColorName(colorEntry, i18n.language) : m.color
+                return (
+                  <div key={m.id}>
+                    <span className="text-sm text-gray-700">
+                      {m.type}{colorLabel ? ` — ${colorLabel}` : ''}{m.amount ? ` (${m.amount}${m.unit ? ` ${m.unit}` : ''})` : ''}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           )}
         </Section>

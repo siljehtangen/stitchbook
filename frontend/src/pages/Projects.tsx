@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { projectsApi } from '../api'
 import type { Project, ProjectCategory } from '../types'
-import { GiChopsticks, GiPirateHook, GiSewingMachine, GiRolledCloth } from 'react-icons/gi'
-import { PiYarnFill } from 'react-icons/pi'
+import { GiChopsticks, GiPirateHook, GiSewingMachine } from 'react-icons/gi'
 
 const CATEGORY_ICONS: Record<ProjectCategory, React.ReactNode> = {
   KNITTING: <GiChopsticks className="text-sand-green-dark" />,
@@ -12,11 +11,10 @@ const CATEGORY_ICONS: Record<ProjectCategory, React.ReactNode> = {
   SEWING: <GiSewingMachine className="text-warm-gray" />,
 }
 
-const ITEM_TYPE_ICONS: Record<string, React.ReactNode> = {
-  YARN: <PiYarnFill className="text-sand-green-dark" />,
-  FABRIC: <GiRolledCloth className="text-warm-gray" />,
-  KNITTING_NEEDLE: <GiChopsticks className="text-sand-green-dark" />,
-  CROCHET_HOOK: <GiPirateHook className="text-sand-blue-deep" />,
+function categoryBadgeClass(cat: ProjectCategory) {
+  if (cat === 'KNITTING') return 'badge-knitting'
+  if (cat === 'CROCHET') return 'badge-crochet'
+  return 'badge-sewing'
 }
 
 export default function Projects() {
@@ -86,38 +84,35 @@ export default function Projects() {
               onClick={() => navigate(`/projects/${project.id}`)}
               className="card w-full text-left hover:shadow-md transition-shadow"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-gray-800">{project.name}</span>
+                    <span className={categoryBadgeClass(project.category)}>
+                      {t(`category_${project.category.toLowerCase()}` as const)}
+                    </span>
+                  </div>
+                  {project.description && (
+                    <p className="text-sm text-warm-gray mt-1 truncate">{project.description}</p>
+                  )}
+                  {project.materials.length > 0 && (
+                    <div className="flex gap-1 mt-2 flex-wrap">
+                      {project.materials.slice(0, 3).map(m => (
+                        <span key={m.id} className="px-2 py-0.5 rounded-full bg-soft-brown/20 text-warm-gray text-xs truncate max-w-[120px]">
+                          {m.type}
+                        </span>
+                      ))}
+                      {project.materials.length > 3 && (
+                        <span className="px-2 py-0.5 rounded-full bg-soft-brown/20 text-warm-gray text-xs">+{project.materials.length - 3}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
                 {project.imageUrl ? (
                   <img src={project.imageUrl} alt={project.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
                 ) : (
-                  <span className="text-3xl flex-shrink-0">{CATEGORY_ICONS[project.category]}</span>
+                  <span className="text-2xl flex-shrink-0">{CATEGORY_ICONS[project.category]}</span>
                 )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-800">{project.name}</p>
-                  {project.description && (
-                    <p className="text-sm text-warm-gray truncate">{project.description}</p>
-                  )}
-                  {project.materials.length > 0 && (
-                    <div className="flex gap-2 mt-1.5 flex-wrap items-center">
-                      {project.materials.map(m => (
-                        m.imageUrl ? (
-                          <img key={m.id} src={m.imageUrl} alt={m.type} title={m.type} className="w-6 h-6 rounded object-cover border border-soft-brown/20" />
-                        ) : (
-                          <span key={m.id} className="text-xl leading-none" title={m.type}>
-                            {(m.itemType && ITEM_TYPE_ICONS[m.itemType]) ?? CATEGORY_ICONS[project.category]}
-                          </span>
-                        )
-                      ))}
-                    </div>
-                  )}
-                  <div className="flex gap-1.5 mt-1 flex-wrap">
-                    {project.tags.split(',').filter(Boolean).map(tag => (
-                      <span key={tag} className="text-xs bg-soft-brown/20 text-warm-gray px-2 py-0.5 rounded-full">
-                        {tag.trim()}
-                      </span>
-                    ))}
-                  </div>
-                </div>
               </div>
             </button>
           ))}
