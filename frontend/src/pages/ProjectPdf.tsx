@@ -78,7 +78,8 @@ export function ProjectOverviewPdf({
     })
   })()
 
-  const imgBase = `${window.location.origin}/api/files/${projectId}/`
+  const getImgUrl = (storedName: string) =>
+    storedName.startsWith('http') ? storedName : `${window.location.origin}/api/files/${projectId}/${storedName}`
 
   return (
     <Document>
@@ -123,7 +124,7 @@ export function ProjectOverviewPdf({
             {imageFiles.length > 0 && (
               <View style={S.imgRow}>
                 {imageFiles.map(f => (
-                  <PdfImage key={f.id} style={S.img} src={imgBase + f.storedName} />
+                  <PdfImage key={f.id} style={S.img} src={getImgUrl(f.storedName)} />
                 ))}
               </View>
             )}

@@ -143,9 +143,11 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
             </div>
           )}
         </div>
-        <span className="text-2xl flex-shrink-0">
-          {CATEGORY_ICONS[project.category]}
-        </span>
+        {project.imageUrl ? (
+          <img src={project.imageUrl} alt={project.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+        ) : (
+          <span className="text-2xl flex-shrink-0">{CATEGORY_ICONS[project.category]}</span>
+        )}
       </div>
       {progress !== null && (
         <div className="mt-3">

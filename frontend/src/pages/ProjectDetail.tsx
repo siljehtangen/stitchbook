@@ -188,7 +188,7 @@ export default function ProjectDetail() {
       {tab === 'info' && (
         <div className="space-y-4">
           {/* Cover image */}
-          <div>
+          <div className="relative">
             <button
               onClick={() => coverImageRef.current?.click()}
               disabled={uploadingCover}
@@ -201,6 +201,16 @@ export default function ProjectDetail() {
                 <span className="text-warm-gray text-sm">{uploadingCover ? t('uploading') : t('upload_cover_image')}</span>
               )}
             </button>
+            {project.imageUrl && (
+              <button
+                onClick={async () => {
+                  const updated = await projectsApi.update(projectId, { imageUrl: '' })
+                  setProject(updated)
+                }}
+                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white text-sm leading-none flex items-center justify-center transition-colors"
+                title={t('delete')}
+              >×</button>
+            )}
             <input ref={coverImageRef} type="file" accept="image/*" onChange={handleCoverImageUpload} className="hidden" />
           </div>
 
