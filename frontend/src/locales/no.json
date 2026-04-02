@@ -54,8 +54,8 @@
   "tab_crochet": "Hekle",
   "tab_overview": "Oversikt",
 
-  "auto_saving": "Lagrer automatisk...",
-  "auto_saving_grid": "Lagrer rutenett automatisk...",
+  "auto_saving": "Endringer lagres automatisk.",
+  "auto_saving_grid": "Endringer lagres automatisk.",
   "describe_project": "Beskriv prosjektet ditt...",
 
   "details_heading": "Detaljer",

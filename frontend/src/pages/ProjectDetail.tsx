@@ -1376,6 +1376,7 @@ function RoundCounterWidget({ counter, onSave }: {
           {t('change_setup')}
         </button>
       </div>
+      <p className="text-xs text-warm-gray">{t('auto_saving')}</p>
     </div>
   )
 }
@@ -1438,7 +1439,7 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, showS
           onClick={() => setEditing(e => !e)}
           className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${editing ? 'bg-sand-green text-gray-800' : 'bg-soft-brown/20 text-warm-gray'}`}
         >{editing ? t('done_editing_grid') : t('edit_grid')}</button>
-        {editing && <p className="text-xs text-warm-gray">{t('auto_saving_grid')}</p>}
+        <p className="text-xs text-warm-gray">{t('auto_saving_grid')}</p>
       </div>
 
       {editing && (

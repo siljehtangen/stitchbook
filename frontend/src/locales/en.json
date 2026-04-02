@@ -54,8 +54,8 @@
   "tab_crochet": "Crochet",
   "tab_overview": "Overview",
 
-  "auto_saving": "Auto-saving...",
-  "auto_saving_grid": "Auto-saving grid...",
+  "auto_saving": "Changes are saved automatically.",
+  "auto_saving_grid": "Changes are saved automatically.",
   "describe_project": "Describe your project...",
 
   "details_heading": "Details",
