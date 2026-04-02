@@ -25,6 +25,7 @@ export default function Dashboard() {
   }, [])
 
   const filtered = filter === 'ALL' ? projects : projects.filter(p => p.category === filter)
+  const newProjectPath = filter === 'ALL' ? '/projects/new' : `/projects/new?category=${filter}`
   const counts = {
     ALL: projects.length,
     KNITTING: projects.filter(p => p.category === 'KNITTING').length,
@@ -71,11 +72,19 @@ export default function Dashboard() {
           <h3 className="font-semibold text-gray-800">
             {filter === 'ALL' ? t('recent_projects') : categoryLabel(filter)}
           </h3>
-          {filter !== 'ALL' && (
-            <button onClick={() => setFilter('ALL')} className="text-xs text-warm-gray hover:text-gray-700">
-              {t('clear_filter')}
+          <div className="flex items-center gap-2">
+            {filter !== 'ALL' && (
+              <button
+                onClick={() => setFilter('ALL')}
+                className="text-xs text-warm-gray hover:text-gray-700"
+              >
+                {t('clear_filter')}
+              </button>
+            )}
+            <button onClick={() => navigate(newProjectPath)} className="btn-primary text-xs whitespace-nowrap">
+              {t('add_project')}
             </button>
-          )}
+          </div>
         </div>
 
         {loading ? (
@@ -84,7 +93,7 @@ export default function Dashboard() {
           <div className="card text-center py-10">
             <p className="text-warm-gray text-sm">{t('no_projects_yet')}</p>
             <button
-              onClick={() => navigate('/projects/new')}
+              onClick={() => navigate(newProjectPath)}
               className="btn-primary mt-4 text-sm"
             >
               {t('create_first_project')}

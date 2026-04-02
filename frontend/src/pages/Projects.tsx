@@ -29,6 +29,8 @@ export default function Projects() {
     projectsApi.getAll().then(setProjects).finally(() => setLoading(false))
   }, [])
 
+  const newProjectPath = filter === 'ALL' ? '/projects/new' : `/projects/new?category=${filter}`
+
   const q = search.toLowerCase()
   const filtered = projects.filter(p => {
     if (filter !== 'ALL' && p.category !== filter) return false
@@ -40,7 +42,15 @@ export default function Projects() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-gray-800">{t('projects_heading')}</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-xl font-semibold text-gray-800">{t('projects_heading')}</h2>
+        <button
+          onClick={() => navigate(newProjectPath)}
+          className="btn-primary text-sm whitespace-nowrap"
+        >
+          {t('add_project')}
+        </button>
+      </div>
 
       <input
         type="search"
@@ -72,7 +82,7 @@ export default function Projects() {
       ) : filtered.length === 0 ? (
         <div className="card text-center py-10">
           <p className="text-warm-gray text-sm">{t('no_projects_found')}</p>
-          <button onClick={() => navigate('/projects/new')} className="btn-primary mt-4 text-sm">
+          <button onClick={() => navigate(newProjectPath)} className="btn-primary mt-4 text-sm">
             {t('add_project')}
           </button>
         </div>

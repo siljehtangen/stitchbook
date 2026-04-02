@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { projectsApi } from '../api'
 import { useToast } from '../context/ToastContext'
@@ -16,11 +16,17 @@ type CoverImageEntry = { file: File; preview: string; isMain: boolean }
 
 export default function NewProject() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { t } = useTranslation()
   const { showToast } = useToast()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [category, setCategory] = useState<ProjectCategory>('KNITTING')
+  const initialCategory = ((): ProjectCategory => {
+    const raw = searchParams.get('category')
+    if (raw === 'KNITTING' || raw === 'CROCHET' || raw === 'SEWING') return raw
+    return 'KNITTING'
+  })()
+  const [category, setCategory] = useState<ProjectCategory>(initialCategory)
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10))
   const [coverImages, setCoverImages] = useState<CoverImageEntry[]>([])
   const [saving, setSaving] = useState(false)
