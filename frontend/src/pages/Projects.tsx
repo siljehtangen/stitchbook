@@ -42,14 +42,8 @@ export default function Projects() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
         <h2 className="text-xl font-semibold text-gray-800">{t('projects_heading')}</h2>
-        <button
-          onClick={() => navigate(newProjectPath)}
-          className="btn-primary text-sm whitespace-nowrap"
-        >
-          {t('add_project')}
-        </button>
       </div>
 
       <input

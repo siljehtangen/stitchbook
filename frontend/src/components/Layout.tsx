@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
 import { FaHome, FaUser } from 'react-icons/fa'
@@ -44,6 +44,7 @@ function LanguageSwitcher() {
 
 export default function Layout() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useTranslation()
   const { theme, setTheme } = useTheme()
 
@@ -84,14 +85,16 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      {/* FAB */}
-      <button
-        onClick={() => navigate('/projects/new')}
-        className="fixed bottom-20 right-6 w-14 h-14 bg-sand-green hover:bg-sand-green-dark shadow-lg rounded-full flex items-center justify-center text-2xl transition-all duration-200 hover:scale-105 z-10"
-        aria-label={t('add_project_aria')}
-      >
-        +
-      </button>
+      {/* FAB (hidden on pages where we have a labeled "Add project" button) */}
+      {location.pathname !== '/home' && location.pathname !== '/projects' && (
+        <button
+          onClick={() => navigate('/projects/new')}
+          className="fixed bottom-20 right-6 w-14 h-14 bg-sand-green hover:bg-sand-green-dark shadow-lg rounded-full flex items-center justify-center text-2xl transition-all duration-200 hover:scale-105 z-10"
+          aria-label={t('add_project_aria')}
+        >
+          +
+        </button>
+      )}
 
       {/* Bottom nav */}
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-2xl bg-white/95 backdrop-blur-sm border-t border-sand-blue/30 flex justify-around py-2 z-10">
