@@ -464,12 +464,7 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
 
   return (
     <div className="card flex items-center gap-3">
-      <button
-        onClick={() => fileRef.current?.click()}
-        disabled={uploading}
-        className="w-14 h-14 rounded-xl flex-shrink-0 overflow-hidden border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors"
-        title={t('lib_upload_image')}
-      >
+      <div className="w-14 h-14 rounded-xl flex-shrink-0 overflow-hidden border-2 border-soft-brown/20">
         {libraryDisplayImageUrl(item) ? (
           isImageUrl(libraryDisplayImageUrl(item)!) ? (
             <img src={libraryDisplayImageUrl(item)!} alt={item.name} className="w-full h-full object-cover" />
@@ -477,18 +472,9 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
             <span className="flex items-center justify-center w-full h-full text-2xl">{fileTypeIcon(libraryDisplayImageUrl(item)!)}</span>
           )
         ) : (
-          <span className="flex items-center justify-center w-full h-full text-2xl text-soft-brown/40">
-            {uploading ? '⏳' : '📷'}
-          </span>
+          <span className="flex items-center justify-center w-full h-full text-2xl text-soft-brown/40">📷</span>
         )}
-      </button>
-      <input
-        ref={fileRef}
-        type="file"
-        accept={LIBRARY_PHOTO_ACCEPT}
-        onChange={handleImageUpload}
-        className="hidden"
-      />
+      </div>
       <div className="flex-1 min-w-0">
         <p className="font-medium text-sm text-gray-800">{item.name}</p>
         {subtitle && <p className="text-xs text-warm-gray">{subtitle}</p>}
