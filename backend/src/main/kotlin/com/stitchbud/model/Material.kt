@@ -4,7 +4,7 @@ import jakarta.persistence.*
 
 @Entity
 @Table(name = "materials")
-data class Material(
+class Material(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
     var name: String,
@@ -18,4 +18,13 @@ data class Material(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     var project: Project? = null
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Material) return false
+        if (id == 0L || other.id == 0L) return false
+        return id == other.id
+    }
+
+    override fun hashCode(): Int = if (id != 0L) id.hashCode() else System.identityHashCode(this)
+}
