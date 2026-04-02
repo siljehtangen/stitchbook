@@ -21,7 +21,6 @@ data class MaterialDto(
     val colorHex: String = "#000000",
     val amount: String = "",
     val unit: String = "g",
-    val imageUrl: String? = null,
     val images: List<ProjectImageDto> = emptyList()
 )
 
@@ -55,7 +54,6 @@ data class ProjectDto(
     val description: String = "",
     val category: ProjectCategory,
     val tags: String = "",
-    val imageUrl: String? = null,
     val notes: String = "",
     val recipeText: String = "",
     val craftDetails: String = "{}",
@@ -82,7 +80,6 @@ data class UpdateProjectRequest(
     val name: String? = null,
     val description: String? = null,
     val tags: String? = null,
-    val imageUrl: String? = null,
     val notes: String? = null,
     val recipeText: String? = null,
     val craftDetails: String? = null,
@@ -117,7 +114,6 @@ data class AddMaterialRequest(
     val colorHex: String = "#000000",
     val amount: String = "",
     val unit: String = "g",
-    val imageUrl: String? = null
 )
 
 data class RegisterProjectImageRequest(

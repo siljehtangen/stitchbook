@@ -139,12 +139,6 @@ export default function ProjectDetail() {
     }
   }
 
-  function handleCraftDetailChange(key: string, value: string) {
-    const updated = { ...craftDetails, [key]: value }
-    setCraftDetails(updated)
-    autoSave({ craftDetails: JSON.stringify(updated) })
-  }
-
   async function handleDelete() {
     const ok = await confirm({
       message: t('delete_confirm', { name: project?.name }),
@@ -315,7 +309,7 @@ function MaterialsTab({ project, projectId, onUpdate }: {
 
   function libraryItemThumbUrl(item: LibraryItem) {
     const main = item.images?.find(i => i.isMain) ?? item.images?.[0]
-    return main?.storedName ?? item.imageUrl
+    return main?.storedName
   }
 
   useEffect(() => {
@@ -388,10 +382,17 @@ function MaterialsTab({ project, projectId, onUpdate }: {
     try {
       let updated = await projectsApi.addMaterial(projectId, {
         name: item.name, type, itemType: item.itemType, color: colorName, colorHex, amount, unit,
-        imageUrl: libImgs[0]?.storedName,
       })
+      const newMat = updated.materials.reduce((a, b) => (a.id > b.id ? a : b))
+      if (libImgs.length > 0) {
+        updated = await projectsApi.registerMaterialImageByUrl(
+          projectId,
+          newMat.id,
+          libImgs[0].storedName,
+          libImgs[0].originalName || 'image',
+        )
+      }
       if (libImgs.length > 1) {
-        const newMat = updated.materials.reduce((a, b) => (a.id > b.id ? a : b))
         for (let i = 1; i < libImgs.length; i++) {
           updated = await projectsApi.registerMaterialImageByUrl(
             projectId,
@@ -422,7 +423,7 @@ function MaterialsTab({ project, projectId, onUpdate }: {
       )}
       {project.materials.map(m => {
         const mainImg = m.images?.find(img => img.isMain) ?? m.images?.[0]
-        const thumbSrc = mainImg?.storedName ?? m.imageUrl
+        const thumbSrc = mainImg?.storedName
         return (
           <div key={m.id} className="card">
             <div className="flex items-center gap-2">

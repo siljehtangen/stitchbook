@@ -14,7 +14,6 @@ class Material(
     var colorHex: String = "#000000",
     var amount: String = "",
     var unit: String = "g",
-    var imageUrl: String? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     var project: Project? = null

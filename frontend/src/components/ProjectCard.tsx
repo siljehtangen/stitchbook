@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { GiChopsticks, GiPirateHook, GiSewingMachine } from 'react-icons/gi'
 import type { Project, ProjectCategory } from '../types'
+import { projectCoverImageUrls } from '../projectOverviewMedia'
 
 const CATEGORY_ICONS: Record<ProjectCategory, React.ReactNode> = {
   KNITTING: <GiChopsticks className="text-sand-green-dark" />,
@@ -19,6 +20,7 @@ export default function ProjectCard({ project, onClick }: { project: Project; on
   const progress = project.rowCounter && project.rowCounter.totalRounds > 0
     ? Math.round((project.rowCounter.checkedStitches ? JSON.parse(project.rowCounter.checkedStitches).length : 0) / (project.rowCounter.stitchesPerRound * project.rowCounter.totalRounds) * 100)
     : null
+  const cover = projectCoverImageUrls(project)[0]
 
   return (
     <button onClick={onClick} className="card w-full text-left hover:shadow-md transition-shadow">
@@ -46,8 +48,8 @@ export default function ProjectCard({ project, onClick }: { project: Project; on
             </div>
           )}
         </div>
-        {project.imageUrl ? (
-          <img src={project.imageUrl} alt={project.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+        {cover ? (
+          <img src={cover} alt={project.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
         ) : (
           <span className="text-2xl flex-shrink-0">{CATEGORY_ICONS[project.category]}</span>
         )}

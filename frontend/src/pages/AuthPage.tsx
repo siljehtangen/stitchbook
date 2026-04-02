@@ -38,7 +38,6 @@ export default function AuthPage() {
 
         {error && <p className="text-sm text-red-500">{error}</p>}
 
-        <p className="text-xs text-center text-warm-gray">{t('auth_google_only_hint')}</p>
       </div>
     </div>
   )

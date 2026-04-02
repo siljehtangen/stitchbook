@@ -12,7 +12,6 @@ data class LibraryItemDto(
     val id: Long = 0,
     val itemType: String,
     val name: String,
-    val imageUrl: String? = null,
     val images: List<LibraryItemImageDto> = emptyList(),
     val colors: List<String> = emptyList(),
     val yarnMaterial: String? = null,
@@ -29,7 +28,6 @@ data class LibraryItemDto(
 
 data class UpdateLibraryItemRequest(
     val name: String? = null,
-    val imageUrl: String? = null,
     val colors: List<String>? = null,
     val yarnMaterial: String? = null,
     val yarnBrand: String? = null,

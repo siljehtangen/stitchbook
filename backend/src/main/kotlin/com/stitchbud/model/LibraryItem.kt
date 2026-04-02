@@ -11,7 +11,6 @@ data class LibraryItem(
     var itemType: String = "",
     var name: String = "",
     var imageStoredName: String? = null,
-    var imageUrl: String? = null,
     // Yarn
     var yarnMaterial: String? = null,
     var yarnBrand: String? = null,

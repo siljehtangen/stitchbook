@@ -13,7 +13,6 @@ data class Project(
     @Enumerated(EnumType.STRING)
     var category: ProjectCategory,
     var tags: String = "",
-    var imageUrl: String? = null,
     var notes: String = "",
     var recipeText: String = "",
     @Column(columnDefinition = "TEXT")

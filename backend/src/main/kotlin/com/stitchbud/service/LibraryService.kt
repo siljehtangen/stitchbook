@@ -53,11 +53,6 @@ class LibraryService(
         val item = libraryItemRepository.findById(id).orElseThrow { RuntimeException("Item not found") }
         if (item.userId != userId) throw RuntimeException("Not found")
         req.name?.let { item.name = it }
-        req.imageUrl?.let {
-            if (item.images.isEmpty()) {
-                item.imageUrl = it
-            }
-        }
         req.colors?.let { item.colors = it.joinToString(",") }
         req.yarnMaterial?.let { item.yarnMaterial = it }
         req.yarnBrand?.let { item.yarnBrand = it }
@@ -84,9 +79,6 @@ class LibraryService(
             libraryItem = item
         )
         item.images.add(img)
-        if (isFirst) {
-            item.imageUrl = req.fileUrl
-        }
         return libraryItemRepository.save(item).toDto()
     }
 
@@ -97,7 +89,6 @@ class LibraryService(
         val target = item.images.find { it.id == imageId } ?: throw RuntimeException("Image not found")
         item.images.forEach { it.isMain = false }
         target.isMain = true
-        item.imageUrl = target.storedName
         return libraryItemRepository.save(item).toDto()
     }
 
@@ -112,7 +103,6 @@ class LibraryService(
         if (wasMain) {
             val next = item.images.firstOrNull()
             next?.isMain = true
-            item.imageUrl = next?.storedName
         }
         return libraryItemRepository.save(item).toDto()
     }
@@ -120,6 +110,8 @@ class LibraryService(
     fun uploadImage(id: Long, file: MultipartFile, userId: String): LibraryItemDto {
         val item = libraryItemRepository.findById(id).orElseThrow { RuntimeException("Item not found") }
         if (item.userId != userId) throw RuntimeException("Not found")
+        migrateLegacyImageIfNeeded(item)
+        if (item.images.size >= MAX_IMAGES) throw RuntimeException("Maximum $MAX_IMAGES images per library item")
         item.imageStoredName?.let { deleteImageFromDisk(it) }
         val ext = file.originalFilename?.substringAfterLast('.', "") ?: ""
         val storedName = "${UUID.randomUUID()}${if (ext.isNotEmpty()) ".$ext" else ""}"
@@ -128,7 +120,16 @@ class LibraryService(
         file.transferTo(dir.resolve(storedName).toFile())
         item.imageStoredName = storedName
         val publicPath = "/api/library-images/$storedName"
-        item.imageUrl = publicPath
+        // Treat as adding a new gallery image and making it main.
+        item.images.forEach { it.isMain = false }
+        item.images.add(
+            LibraryItemImage(
+                storedName = publicPath,
+                originalName = file.originalFilename ?: storedName,
+                isMain = true,
+                libraryItem = item
+            )
+        )
         return libraryItemRepository.save(item).toDto()
     }
 
@@ -137,7 +138,6 @@ class LibraryService(
         if (item.userId != userId) throw RuntimeException("Not found")
         item.images.forEach { deleteStoredImage(it.storedName) }
         item.images.clear()
-        item.imageUrl?.let { deleteStoredImage(it) }
         item.imageStoredName?.let { deleteImageFromDisk(it) }
         libraryItemRepository.deleteById(id)
     }
@@ -146,7 +146,6 @@ class LibraryService(
         val items = libraryItemRepository.findByUserId(userId)
         items.forEach { item ->
             item.images.forEach { deleteStoredImage(it.storedName) }
-            item.imageUrl?.let { deleteStoredImage(it) }
             item.imageStoredName?.let { deleteImageFromDisk(it) }
         }
         libraryItemRepository.deleteAll(items)
@@ -157,7 +156,7 @@ class LibraryService(
 
     private fun migrateLegacyImageIfNeeded(item: LibraryItem) {
         if (item.images.isNotEmpty()) return
-        val url = item.imageUrl ?: item.imageStoredName?.let { "/api/library-images/$it" } ?: return
+        val url = item.imageStoredName?.let { "/api/library-images/$it" } ?: return
         item.images.add(
             LibraryItemImage(
                 storedName = url,
@@ -166,7 +165,6 @@ class LibraryService(
                 libraryItem = item
             )
         )
-        item.imageUrl = url
     }
 
     private fun deleteStoredImage(storedName: String) {
@@ -191,14 +189,10 @@ class LibraryService(
         val imageDtos = images.map {
             LibraryItemImageDto(it.id, it.storedName, it.originalName, it.isMain, id)
         }
-        val mainFromRows = images.find { it.isMain } ?: images.firstOrNull()
-        val legacyUrl = imageUrl ?: imageStoredName?.let { "/api/library-images/$it" }
-        val displayUrl = mainFromRows?.storedName ?: legacyUrl
         return LibraryItemDto(
             id = id,
             itemType = itemType,
             name = name,
-            imageUrl = displayUrl,
             images = imageDtos,
             colors = colors?.split(",")?.filter { it.isNotEmpty() } ?: emptyList(),
             yarnMaterial = yarnMaterial,

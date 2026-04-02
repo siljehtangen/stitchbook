@@ -7,9 +7,9 @@ import type { LibraryItem, LibraryItemType } from '../types'
 import { COLOR_MAP, COLOR_MAP_BY_HEX, getColorName } from '../colors'
 import { ITEM_TYPES, COLOR_ITEM_TYPES, TYPE_ICONS, Field, ColorPicker, LibraryItemForm, MAX_LIBRARY_PHOTOS, LIBRARY_PHOTO_ACCEPT } from '../components/LibraryItemForm'
 
-function libraryDisplayImageUrl(item: { imageUrl?: string; images?: { storedName: string; isMain: boolean }[] }) {
+function libraryDisplayImageUrl(item: { images?: { storedName: string; isMain: boolean }[] }) {
   const main = item.images?.find(i => i.isMain) ?? item.images?.[0]
-  return main?.storedName ?? item.imageUrl
+  return main?.storedName
 }
 
 function isImageUrl(url: string) {
@@ -470,11 +470,11 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
         className="w-14 h-14 rounded-xl flex-shrink-0 overflow-hidden border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors"
         title={t('lib_upload_image')}
       >
-        {item.imageUrl ? (
-          isImageUrl(item.imageUrl) ? (
-            <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+        {libraryDisplayImageUrl(item) ? (
+          isImageUrl(libraryDisplayImageUrl(item)!) ? (
+            <img src={libraryDisplayImageUrl(item)!} alt={item.name} className="w-full h-full object-cover" />
           ) : (
-            <span className="flex items-center justify-center w-full h-full text-2xl">{fileTypeIcon(item.imageUrl)}</span>
+            <span className="flex items-center justify-center w-full h-full text-2xl">{fileTypeIcon(libraryDisplayImageUrl(item)!)}</span>
           )
         ) : (
           <span className="flex items-center justify-center w-full h-full text-2xl text-soft-brown/40">

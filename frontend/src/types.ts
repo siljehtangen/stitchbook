@@ -14,7 +14,6 @@ export interface LibraryItem {
   id: number
   itemType: LibraryItemType
   name: string
-  imageUrl?: string
   images?: LibraryItemImage[]
   colors: string[]
   // Yarn
@@ -52,7 +51,6 @@ export interface Material {
   colorHex: string
   amount: string
   unit: string
-  imageUrl?: string
   images: ProjectImage[]
 }
 
@@ -86,7 +84,6 @@ export interface Project {
   description: string
   category: ProjectCategory
   tags: string
-  imageUrl?: string
   coverImages: ProjectImage[]
   notes: string
   recipeText: string

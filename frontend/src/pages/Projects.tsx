@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { projectsApi } from '../api'
 import type { Project, ProjectCategory } from '../types'
 import { GiChopsticks, GiPirateHook, GiSewingMachine } from 'react-icons/gi'
+import { projectCoverImageUrls } from '../projectOverviewMedia'
 
 const CATEGORY_ICONS: Record<ProjectCategory, React.ReactNode> = {
   KNITTING: <GiChopsticks className="text-sand-green-dark" />,
@@ -112,8 +113,8 @@ export default function Projects() {
                     </div>
                   )}
                 </div>
-                {project.imageUrl ? (
-                  <img src={project.imageUrl} alt={project.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+                {projectCoverImageUrls(project)[0] ? (
+                  <img src={projectCoverImageUrls(project)[0]} alt={project.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
                 ) : (
                   <span className="text-2xl flex-shrink-0">{CATEGORY_ICONS[project.category]}</span>
                 )}

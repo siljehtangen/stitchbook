@@ -12,11 +12,9 @@ export function normalizeProject(p: Project): Project {
   }
 }
 
-/** All project cover image URLs (main gallery), newest API shape first; falls back to legacy `imageUrl`. */
+/** All project cover image URLs (main gallery). */
 export function projectCoverImageUrls(project: Project): string[] {
-  const fromCovers = (project.coverImages ?? []).map(c => c.storedName).filter(Boolean)
-  if (fromCovers.length > 0) return fromCovers
-  return project.imageUrl ? [project.imageUrl] : []
+  return (project.coverImages ?? []).map(c => c.storedName).filter(Boolean)
 }
 
 /** Browser- or PDF-loadable URL for a material/cover stored name (Supabase and `/api/files/...` pass through). */
@@ -32,18 +30,12 @@ export function resolveProjectMediaUrl(projectId: number, storedName: string): s
   return `/api/files/${projectId}/${storedName}`
 }
 
-/** All image URLs for a material: gallery rows (★ first) plus legacy `imageUrl` if not already listed. Pass `projectId` so disk-backed filenames resolve under `/api/files/...`. */
+/** All image URLs for a material: gallery rows (★ first). Pass `projectId` so disk-backed filenames resolve under `/api/files/...`. */
 export function materialImageUrls(m: Material, projectId?: number): string[] {
   const rows = m.images ?? []
   const mainFirst = [...rows].sort((a, b) => (a.isMain === b.isMain ? 0 : a.isMain ? -1 : 1))
   const fromRows = mainFirst.map(i => i.storedName).filter(Boolean)
-  const seen = new Set(fromRows)
-  const out = [...fromRows]
-  if (m.imageUrl && !seen.has(m.imageUrl)) {
-    out.unshift(m.imageUrl)
-    seen.add(m.imageUrl)
-  }
-  const raw = out.length > 0 ? out : m.imageUrl ? [m.imageUrl] : []
+  const raw = fromRows
   if (projectId == null) return raw
   return raw.map(u => resolveProjectMediaUrl(projectId, u))
 }
@@ -55,9 +47,7 @@ export function uniqueImageUrls(urls: string[]): string[] {
 /** Library item images in display order (main first) for copying onto a project material. */
 export function libraryItemImagesForProject(item: LibraryItem): { storedName: string; originalName: string }[] {
   const list = item.images ?? []
-  if (list.length === 0) {
-    return item.imageUrl ? [{ storedName: item.imageUrl, originalName: '' }] : []
-  }
+  if (list.length === 0) return []
   const main = list.find(i => i.isMain)
   const rest = list.filter(i => !i.isMain)
   const ordered = main ? [main, ...rest] : [...list]

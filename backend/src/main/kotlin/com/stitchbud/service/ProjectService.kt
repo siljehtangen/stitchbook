@@ -48,7 +48,6 @@ class ProjectService(
         req.name?.let { project.name = it }
         req.description?.let { project.description = it }
         req.tags?.let { project.tags = it }
-        req.imageUrl?.let { project.imageUrl = it }
         req.notes?.let { project.notes = it }
         req.recipeText?.let { project.recipeText = it }
         req.craftDetails?.let { project.craftDetails = it }
@@ -84,17 +83,19 @@ class ProjectService(
 
     fun addMaterial(projectId: Long, req: AddMaterialRequest, userId: String): ProjectDto {
         val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
-        val material = Material(name = req.name, type = req.type, itemType = req.itemType, color = req.color, colorHex = req.colorHex, amount = req.amount, unit = req.unit, imageUrl = req.imageUrl, project = project)
+        val material = Material(
+            name = req.name,
+            type = req.type,
+            itemType = req.itemType,
+            color = req.color,
+            colorHex = req.colorHex,
+            amount = req.amount,
+            unit = req.unit,
+            project = project
+        )
         project.materials.add(material)
         project.updatedAt = System.currentTimeMillis()
-        val saved = projectRepository.save(project)
-        // If a library image URL was provided, register it as the main material image
-        if (!req.imageUrl.isNullOrBlank()) {
-            val mat = saved.materials.last()
-            saved.images.add(ProjectImage(storedName = req.imageUrl, originalName = "", section = "material", materialId = mat.id, isMain = true, project = saved))
-            return projectRepository.save(saved).toDto()
-        }
-        return saved.toDto()
+        return projectRepository.save(project).toDto()
     }
 
     fun deleteMaterial(projectId: Long, materialId: Long, userId: String): ProjectDto {
@@ -154,7 +155,6 @@ class ProjectService(
         val isFirst = coverImages.isEmpty()
         val img = ProjectImage(storedName = req.fileUrl, originalName = req.originalName, section = "cover", materialId = null, isMain = isFirst, project = project)
         project.images.add(img)
-        if (isFirst) project.imageUrl = req.fileUrl
         project.updatedAt = System.currentTimeMillis()
         return projectRepository.save(project).toDto()
     }
@@ -164,7 +164,6 @@ class ProjectService(
         val target = project.images.find { it.id == imageId && it.section == "cover" } ?: throw RuntimeException("Image not found")
         project.images.filter { it.section == "cover" }.forEach { it.isMain = false }
         target.isMain = true
-        project.imageUrl = target.storedName
         project.updatedAt = System.currentTimeMillis()
         return projectRepository.save(project).toDto()
     }
@@ -178,7 +177,6 @@ class ProjectService(
         if (wasMain) {
             val next = project.images.firstOrNull { it.section == "cover" }
             next?.isMain = true
-            project.imageUrl = next?.storedName
         }
         project.updatedAt = System.currentTimeMillis()
         return projectRepository.save(project).toDto()
@@ -194,9 +192,6 @@ class ProjectService(
         val isFirst = matImages.isEmpty()
         val img = ProjectImage(storedName = req.fileUrl, originalName = req.originalName, section = "material", materialId = materialId, isMain = isFirst, project = project)
         project.images.add(img)
-        if (isFirst) {
-            project.materials.find { it.id == materialId }?.imageUrl = req.fileUrl
-        }
         project.updatedAt = System.currentTimeMillis()
         return projectRepository.save(project).toDto()
     }
@@ -206,7 +201,6 @@ class ProjectService(
         val target = project.images.find { it.id == imageId && it.section == "material" } ?: throw RuntimeException("Image not found")
         project.images.filter { it.section == "material" && it.materialId == target.materialId }.forEach { it.isMain = false }
         target.isMain = true
-        project.materials.find { it.id == target.materialId }?.imageUrl = target.storedName
         project.updatedAt = System.currentTimeMillis()
         return projectRepository.save(project).toDto()
     }
@@ -221,7 +215,6 @@ class ProjectService(
         if (wasMain && materialId != null) {
             val next = project.images.firstOrNull { it.section == "material" && it.materialId == materialId }
             next?.isMain = true
-            project.materials.find { it.id == materialId }?.imageUrl = next?.storedName
         }
         project.updatedAt = System.currentTimeMillis()
         return projectRepository.save(project).toDto()
@@ -229,12 +222,25 @@ class ProjectService(
 
     fun uploadCoverImage(projectId: Long, file: MultipartFile, userId: String): ProjectDto {
         val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
+        val coverImages = project.images.filter { it.section == "cover" }
+        if (coverImages.size >= 3) throw RuntimeException("Maximum 3 cover images allowed")
         val ext = file.originalFilename?.substringAfterLast('.', "") ?: ""
         val storedName = "cover_${UUID.randomUUID()}${if (ext.isNotEmpty()) ".$ext" else ""}"
         val dir = Paths.get(uploadDir, projectId.toString())
         Files.createDirectories(dir)
         file.transferTo(dir.resolve(storedName).toFile())
-        project.imageUrl = "/api/files/$projectId/$storedName"
+        val publicUrl = "/api/files/$projectId/$storedName"
+        val isFirst = coverImages.isEmpty()
+        project.images.add(
+            ProjectImage(
+                storedName = publicUrl,
+                originalName = file.originalFilename ?: storedName,
+                section = "cover",
+                materialId = null,
+                isMain = isFirst,
+                project = project
+            )
+        )
         project.updatedAt = System.currentTimeMillis()
         return projectRepository.save(project).toDto()
     }
@@ -305,15 +311,16 @@ class ProjectService(
         val allImages = projectImageRepository.findByProject_Id(id)
         fun toImgDto(it: ProjectImage) =
             ProjectImageDto(it.id, it.storedName, it.originalName, it.section, it.materialId, it.isMain, id)
+        val coverRows = allImages.filter { it.section == "cover" }.sortedBy { it.id }
         return ProjectDto(
             id = id, name = name, description = description, category = category,
-            tags = tags, imageUrl = imageUrl, notes = notes, recipeText = recipeText, craftDetails = craftDetails,
-            coverImages = allImages.filter { it.section == "cover" }.sortedBy { it.id }.map(::toImgDto),
+            tags = tags, notes = notes, recipeText = recipeText, craftDetails = craftDetails,
+            coverImages = coverRows.map(::toImgDto),
             materials = materials.map { m ->
                 val matImages = allImages
                     .filter { it.section == "material" && it.materialId == m.id }
                     .sortedBy { it.id }
-                MaterialDto(m.id, m.name, m.type, m.itemType, m.color, m.colorHex, m.amount, m.unit, m.imageUrl,
+                MaterialDto(m.id, m.name, m.type, m.itemType, m.color, m.colorHex, m.amount, m.unit,
                     images = matImages.map(::toImgDto)
                 )
             },

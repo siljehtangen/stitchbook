@@ -37,7 +37,7 @@ export const projectsApi = {
   create: (data: { name: string; startDate: number; category: ProjectCategory; description?: string; tags?: string }) =>
     api.post<Project>('/projects', data).then(r => projectRes(r.data)),
 
-  update: (id: number, data: Partial<{ name: string; description: string; tags: string; imageUrl: string; notes: string; recipeText: string; craftDetails: string; startDate: number; endDate: number; clearEndDate: boolean }>) =>
+  update: (id: number, data: Partial<{ name: string; description: string; tags: string; notes: string; recipeText: string; craftDetails: string; startDate: number; endDate: number; clearEndDate: boolean }>) =>
     api.put<Project>(`/projects/${id}`, data).then(r => projectRes(r.data)),
 
   uploadCoverImage: async (id: number, file: File): Promise<Project> => {
@@ -80,7 +80,7 @@ export const projectsApi = {
   delete: (id: number) =>
     api.delete(`/projects/${id}`),
 
-  addMaterial: (id: number, data: { name: string; type: string; itemType?: string; color?: string; colorHex?: string; amount?: string; unit?: string; imageUrl?: string }) =>
+  addMaterial: (id: number, data: { name: string; type: string; itemType?: string; color?: string; colorHex?: string; amount?: string; unit?: string }) =>
     api.post<Project>(`/projects/${id}/materials`, data).then(r => projectRes(r.data)),
 
   deleteMaterial: (id: number, materialId: number) =>
@@ -129,11 +129,6 @@ export const libraryApi = {
   }) =>
     api.post<LibraryItem>('/library', data).then(r => r.data),
 
-  uploadImage: async (id: number, file: File): Promise<LibraryItem> => {
-    const publicUrl = await uploadFile(file, `library/${id}`)
-    return api.put<LibraryItem>(`/library/${id}`, { imageUrl: publicUrl }).then(r => r.data)
-  },
-
   registerLibraryImage: async (id: number, file: File): Promise<LibraryItem> => {
     const publicUrl = await uploadFile(file, `library/${id}`)
     return api.post<LibraryItem>(`/library/${id}/images/register`, {
@@ -149,7 +144,7 @@ export const libraryApi = {
     api.delete<LibraryItem>(`/library/${libraryItemId}/images/${imageId}`).then(r => r.data),
 
   update: (id: number, data: {
-    name?: string; imageUrl?: string; colors?: string[]
+    name?: string; colors?: string[]
     yarnMaterial?: string; yarnBrand?: string; yarnAmountG?: number; yarnAmountM?: number
     fabricWidthCm?: number; fabricLengthCm?: number
     needleSizeMm?: string; circularLengthCm?: number
