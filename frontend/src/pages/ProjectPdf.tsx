@@ -44,6 +44,9 @@ export interface PdfLabels {
   materials: string
   recipe: string
   patternGrid: string
+  gridNumber: (n: number) => string
+  gridClipped: (rows: number, cols: number) => string
+  footer: string
 }
 
 export interface PdfProps {
@@ -168,7 +171,7 @@ export function ProjectOverviewPdf({
             {gridDatas.map((gridData, i) => (
               <View key={i} style={i > 0 ? { marginTop: 8 } : undefined}>
                 {gridDatas.length > 1 && (
-                  <Text style={S.clipNote}>Grid {i + 1}</Text>
+                  <Text style={S.clipNote}>{labels.gridNumber(i + 1)}</Text>
                 )}
                 {Array.from({ length: gridData.rows }, (_, r) => (
                   <View key={r} style={S.gridRow}>
@@ -181,14 +184,14 @@ export function ProjectOverviewPdf({
                   </View>
                 ))}
                 {gridData.clipped && (
-                  <Text style={S.clipNote}>Grid clipped to {MAX_PATTERN_ROWS}×{MAX_PATTERN_COLS} for PDF.</Text>
+                  <Text style={S.clipNote}>{labels.gridClipped(MAX_PATTERN_ROWS, MAX_PATTERN_COLS)}</Text>
                 )}
               </View>
             ))}
           </View>
         ) : null}
 
-        <Text style={S.footer}>Exported from Stitchbud</Text>
+        <Text style={S.footer}>{labels.footer}</Text>
       </Page>
     </Document>
   )

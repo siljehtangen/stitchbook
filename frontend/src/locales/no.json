@@ -130,6 +130,9 @@
   "section_materials": "Materialer",
   "section_recipe": "Oppskrift",
   "section_pattern_grid": "Mønsterrutenett",
+  "pdf_grid_number": "Rutenett {{number}}",
+  "pdf_grid_clipped": "Rutenett begrenset til {{rows}}×{{cols}} for PDF.",
+  "pdf_footer": "Eksportert fra Stitchbud",
 
   "field_name": "Navn",
   "field_description": "Beskrivelse",

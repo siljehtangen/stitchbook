@@ -130,6 +130,9 @@
   "section_materials": "Materials",
   "section_recipe": "Recipe",
   "section_pattern_grid": "Pattern Grid",
+  "pdf_grid_number": "Grid {{number}}",
+  "pdf_grid_clipped": "Grid clipped to {{rows}}×{{cols}} for PDF.",
+  "pdf_footer": "Exported from Stitchbud",
 
   "field_name": "Name",
   "field_description": "Description",

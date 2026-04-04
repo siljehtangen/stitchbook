@@ -962,6 +962,9 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
           materials: t('section_materials'),
           recipe: t('section_recipe'),
           patternGrid: t('section_pattern_grid'),
+          gridNumber: (n) => t('pdf_grid_number', { number: n }),
+          gridClipped: (rows, cols) => t('pdf_grid_clipped', { rows, cols }),
+          footer: t('pdf_footer'),
         }}
       />
     )
