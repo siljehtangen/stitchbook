@@ -9,6 +9,7 @@ import com.stitchbud.dto.UpdateLibraryItemRequest
 import com.stitchbud.dto.LibraryItemDto
 import com.stitchbud.model.LibraryItem
 import com.stitchbud.model.LibraryItemImage
+import com.stitchbud.repository.LibraryItemImageRepository
 import com.stitchbud.repository.LibraryItemRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -23,6 +24,7 @@ import java.util.UUID
 @Transactional
 class LibraryService(
     private val libraryItemRepository: LibraryItemRepository,
+    private val libraryItemImageRepository: LibraryItemImageRepository,
     private val storageService: SupabaseStorageService,
     @Value("\${app.upload-dir:./uploads}") private val uploadDir: String
 ) {
@@ -138,7 +140,6 @@ class LibraryService(
     fun delete(id: Long, userId: String) {
         val item = findItem(id, userId)
         item.images.forEach { deleteStoredImage(it.storedName) }
-        item.images.clear()
         item.imageStoredName?.let { deleteImageFromDisk(it) }
         libraryItemRepository.deleteById(id)
     }
@@ -149,7 +150,8 @@ class LibraryService(
             item.images.forEach { deleteStoredImage(it.storedName) }
             item.imageStoredName?.let { deleteImageFromDisk(it) }
         }
-        libraryItemRepository.deleteAll(items)
+        libraryItemImageRepository.deleteAllByLibraryItemUserId(userId)
+        libraryItemRepository.deleteAllByUserId(userId)
     }
 
     fun getImageFile(storedName: String): java.io.File =

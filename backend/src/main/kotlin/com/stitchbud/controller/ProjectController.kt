@@ -45,6 +45,12 @@ class ProjectController(private val projectService: ProjectService) {
 
     @DeleteMapping("/account")
     fun deleteAccount(): ResponseEntity<Unit> {
+        projectService.deleteAccount(userId())
+        return ResponseEntity.noContent().build()
+    }
+
+    @DeleteMapping("/account/data")
+    fun resetData(): ResponseEntity<Unit> {
         projectService.deleteAllUserData(userId())
         return ResponseEntity.noContent().build()
     }

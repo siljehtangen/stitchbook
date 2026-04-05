@@ -33,6 +33,18 @@ class SupabaseStorageService(
         } catch (_: Exception) {}
     }
 
+    fun deleteUser(userId: String) {
+        try {
+            val request = HttpRequest.newBuilder()
+                .uri(URI.create("$supabaseUrl/auth/v1/admin/users/$userId"))
+                .header("Authorization", "Bearer $serviceKey")
+                .header("apikey", serviceKey)
+                .DELETE()
+                .build()
+            client.send(request, HttpResponse.BodyHandlers.discarding())
+        } catch (_: Exception) {}
+    }
+
     private fun extractPath(url: String): String? {
         val marker = "/object/public/$bucket/"
         val idx = url.indexOf(marker)

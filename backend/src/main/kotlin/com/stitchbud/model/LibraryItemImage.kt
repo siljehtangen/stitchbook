@@ -1,6 +1,8 @@
 package com.stitchbud.model
 
 import jakarta.persistence.*
+import org.hibernate.annotations.OnDelete
+import org.hibernate.annotations.OnDeleteAction
 
 @Entity
 @Table(name = "library_item_images")
@@ -12,6 +14,7 @@ class LibraryItemImage(
     var isMain: Boolean = false,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "library_item_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     var libraryItem: LibraryItem? = null
 ) {
     override fun equals(other: Any?): Boolean {

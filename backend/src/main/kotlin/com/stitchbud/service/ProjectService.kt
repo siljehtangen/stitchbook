@@ -5,8 +5,11 @@ import com.stitchbud.controller.NotFoundException
 import com.stitchbud.dto.*
 import com.stitchbud.model.*
 import com.stitchbud.repository.MaterialRepository
-import com.stitchbud.repository.ProjectRepository
+import com.stitchbud.repository.PatternGridRepository
 import com.stitchbud.repository.ProjectFileRepository
+import com.stitchbud.repository.ProjectImageRepository
+import com.stitchbud.repository.ProjectRepository
+import com.stitchbud.repository.RowCounterRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -22,6 +25,9 @@ class ProjectService(
     private val projectRepository: ProjectRepository,
     private val materialRepository: MaterialRepository,
     private val projectFileRepository: ProjectFileRepository,
+    private val projectImageRepository: ProjectImageRepository,
+    private val patternGridRepository: PatternGridRepository,
+    private val rowCounterRepository: RowCounterRepository,
     private val storageService: SupabaseStorageService,
     private val libraryService: LibraryService,
     @Value("\${app.upload-dir:./uploads}") private val uploadDir: String
@@ -81,6 +87,7 @@ class ProjectService(
     }
 
     fun deleteAllUserData(userId: String) {
+        // Clean up storage files before removing DB records
         val projects = projectRepository.findByUserIdOrderByUpdatedAtDesc(userId)
         projects.forEach { project ->
             project.images.forEach { img ->
@@ -92,8 +99,20 @@ class ProjectService(
                 else deleteFileFromDisk(project.id, file.storedName)
             }
         }
-        projectRepository.deleteAll(projects)
+
+        projectImageRepository.deleteAllByProjectUserId(userId)
+        materialRepository.deleteAllByProjectUserId(userId)
+        projectFileRepository.deleteAllByProjectUserId(userId)
+        patternGridRepository.deleteAllByProjectUserId(userId)
+        rowCounterRepository.deleteAllByProjectUserId(userId)
+        projectRepository.deleteAllByUserId(userId)
+
         libraryService.deleteAllForUser(userId)
+    }
+
+    fun deleteAccount(userId: String) {
+        deleteAllUserData(userId)
+        storageService.deleteUser(userId)
     }
 
     fun addMaterial(projectId: Long, req: AddMaterialRequest, userId: String): ProjectDto {

@@ -1,6 +1,8 @@
 package com.stitchbud.model
 
 import jakarta.persistence.*
+import org.hibernate.annotations.OnDelete
+import org.hibernate.annotations.OnDeleteAction
 
 @Entity
 @Table(name = "pattern_grids")
@@ -13,6 +15,7 @@ class PatternGrid(
     var cellData: String = "[]", // JSON array of {row, col, color, symbol}
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     var project: Project? = null
 ) {
     override fun equals(other: Any?): Boolean {

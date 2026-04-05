@@ -1,16 +1,16 @@
 package com.stitchbud.repository
 
-import com.stitchbud.model.Material
+import com.stitchbud.model.RowCounter
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 
-interface MaterialRepository : JpaRepository<Material, Long> {
+interface RowCounterRepository : JpaRepository<RowCounter, Long> {
     @Modifying
-    @Query("DELETE FROM Material m WHERE m.project.userId = :userId")
+    @Query("DELETE FROM RowCounter r WHERE r.project.userId = :userId")
     fun deleteAllByProjectUserId(userId: String)
 
     @Modifying
-    @Query("DELETE FROM Material m WHERE m.project.id = :projectId")
+    @Query("DELETE FROM RowCounter r WHERE r.project.id = :projectId")
     fun deleteAllByProjectId(projectId: Long)
 }

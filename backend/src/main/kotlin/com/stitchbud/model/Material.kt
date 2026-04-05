@@ -1,6 +1,8 @@
 package com.stitchbud.model
 
 import jakarta.persistence.*
+import org.hibernate.annotations.OnDelete
+import org.hibernate.annotations.OnDeleteAction
 
 @Entity
 @Table(name = "materials")
@@ -16,6 +18,7 @@ class Material(
     var unit: String = "g",
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     var project: Project? = null
 ) {
     override fun equals(other: Any?): Boolean {
