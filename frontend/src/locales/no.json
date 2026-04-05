@@ -215,7 +215,7 @@
   "landing_footer": "Laget for håndverkere · Stitchbud",
 
   "auth_welcome": "Velkommen til Stitchbud",
-  "auth_subtitle": "Logg inn eller opprett en konto",
+  "auth_subtitle": "Logg inn med Gmail",
   "auth_continue_google": "Fortsett med Google",
   "auth_google_only_hint": "Innlogging via e-post er deaktivert for å unngå rate limits.",
 

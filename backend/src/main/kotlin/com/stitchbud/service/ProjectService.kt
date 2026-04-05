@@ -356,7 +356,7 @@ class ProjectService(
             },
             files = files.map { ProjectFileDto(it.id, it.originalName, it.storedName, it.mimeType, it.fileType, it.uploadedAt, id) },
             rowCounter = rowCounter?.let { RowCounterDto(it.id, it.stitchesPerRound, it.totalRounds, it.checkedStitches) },
-            patternGrids = patternGrids.map { PatternGridDto(it.id, it.rows, it.cols, it.cellData) },
+            patternGrids = patternGrids.sortedBy { it.id }.map { PatternGridDto(it.id, it.rows, it.cols, it.cellData) },
             startDate = startDate, endDate = endDate,
             createdAt = createdAt, updatedAt = updatedAt
         )

@@ -12,9 +12,10 @@ export function normalizeProject(p: Project): Project {
   }
 }
 
-/** All project cover image URLs (main gallery). */
+/** All project cover image URLs (main gallery), main image first. */
 export function projectCoverImageUrls(project: Project): string[] {
-  return (project.coverImages ?? []).map(c => c.storedName).filter(Boolean)
+  const sorted = [...(project.coverImages ?? [])].sort((a, b) => (a.isMain === b.isMain ? 0 : a.isMain ? -1 : 1))
+  return sorted.map(c => c.storedName).filter(Boolean)
 }
 
 /** Browser- or PDF-loadable URL for a material/cover stored name (Supabase and `/api/files/...` pass through). */

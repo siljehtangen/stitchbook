@@ -215,7 +215,7 @@
   "landing_footer": "Made for makers · Stitchbud",
 
   "auth_welcome": "Welcome to Stitchbud",
-  "auth_subtitle": "Log in or create an account",
+  "auth_subtitle": "Log in with Gmail",
   "auth_continue_google": "Continue with Google",
   "auth_google_only_hint": "Email login is disabled to avoid rate limits.",
 
