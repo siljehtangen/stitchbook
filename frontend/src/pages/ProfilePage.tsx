@@ -50,7 +50,6 @@ export default function ProfilePage() {
     <div className="space-y-6">
       <h2 className="text-lg font-semibold text-gray-800">{t('profile_heading')}</h2>
 
-      {/* Avatar + name */}
       <div className="card flex items-center gap-4">
         {avatarUrl ? (
           <img
@@ -71,7 +70,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Sign out */}
       <button
         onClick={handleSignOut}
         className="btn-secondary w-full py-3 text-sm"
@@ -79,7 +77,6 @@ export default function ProfilePage() {
         {t('profile_sign_out')}
       </button>
 
-      {/* Reset data */}
       <div className="card border border-orange-100 space-y-3">
         <div>
           <p className="text-sm font-medium text-gray-800">{t('reset_data_heading')}</p>
@@ -115,7 +112,6 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* Delete account */}
       <div className="card border border-red-100 space-y-3">
         <div>
           <p className="text-sm font-medium text-gray-800">{t('delete_account_heading')}</p>

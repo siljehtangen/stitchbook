@@ -26,7 +26,6 @@ export default function Projects() {
         onChange={e => setSearch(e.target.value)}
       />
 
-      {/* Filter tabs */}
       <div className="flex gap-2 flex-wrap">
         {(['ALL', 'KNITTING', 'CROCHET', 'SEWING'] as const).map(cat => (
           <button

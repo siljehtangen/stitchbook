@@ -113,7 +113,6 @@ export default function Library() {
   )
 }
 
-// ── Library Card ───────────────────────────────────────────────
 function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
   item: LibraryItem
   subtitle: string
@@ -131,7 +130,6 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
 
   const hasColors = COLOR_ITEM_TYPES.includes(item.itemType as LibraryItemType)
 
-  // Edit fields
   const [name, setName] = useState(item.name)
   const [colors, setColors] = useState<string[]>(item.colors ?? [])
   const [yarnBrand, setYarnBrand] = useState(item.yarnBrand ?? '')
@@ -255,7 +253,6 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
           />
         </Field>
 
-        {/* Color picker for yarn/fabric */}
         {hasColors && (
           <Field label={t('lib_colors')}>
             <ColorPicker selected={colors} onChange={setColors} />
@@ -331,7 +328,6 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
       <div className="flex-1 min-w-0">
         <p className="font-medium text-sm text-gray-800">{item.name}</p>
         {subtitle && <p className="text-xs text-warm-gray">{subtitle}</p>}
-        {/* Color swatches display */}
         {(item.colors ?? []).length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1">
             {(item.colors ?? []).map(name => {

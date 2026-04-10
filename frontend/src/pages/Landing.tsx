@@ -62,7 +62,6 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-cream flex flex-col max-w-2xl mx-auto overflow-hidden">
 
-      {/* ── Header ── */}
       <header className="px-5 pt-5 pb-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
           <LiaUserFriendsSolid className="text-sand-green-dark text-2xl" />
@@ -100,33 +99,25 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* ── Hero ── */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 pb-16">
 
-        {/* Decorative blob area */}
         <div className="relative flex items-center justify-center mt-10 mb-12">
-          {/* Background soft blobs */}
           <div className="animate-blob-1 absolute w-64 h-64 rounded-full bg-gradient-to-br from-sand-green/25 to-sand-blue/20 blur-3xl" />
           <div className="animate-blob-2 absolute w-44 h-44 rounded-full bg-gradient-to-tl from-soft-brown/30 to-sand-green/15 blur-2xl translate-x-12 -translate-y-4" />
           <div className="animate-blob-3 absolute w-28 h-28 rounded-full bg-gradient-to-br from-sand-blue/20 to-soft-brown/20 blur-2xl -translate-x-16 translate-y-8" />
 
-          {/* Outer ring */}
           <div className="relative w-52 h-52 rounded-full border border-sand-blue/30 flex items-center justify-center">
-            {/* Middle ring */}
             <div className="w-40 h-40 rounded-full bg-gradient-to-br from-sand-green/30 to-sand-blue/25 border border-sand-green/20 flex items-center justify-center shadow-sm">
-              {/* Inner circle */}
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-sand-green/50 to-sand-blue/40 flex items-center justify-center shadow-inner">
                 <GiButterfly className="animate-butterfly text-sand-green-dark text-4xl" />
               </div>
             </div>
 
-            {/* Orbiting icons with tooltips */}
             {orbitIcons.map(({ icon, label, desc, border, position, tooltipSide }) => (
               <div key={label} className={`${position} group`}>
                 <div className={`w-9 h-9 rounded-full bg-cream ${border} border shadow-sm flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-125 hover:shadow-md hover:border-sand-green-dark/50`}>
                   {icon}
                 </div>
-                {/* Tooltip */}
                 <div className={`
                   pointer-events-none absolute z-10 w-32
                   bg-white/95 border border-sand-blue/20 rounded-xl shadow-md px-3 py-2
@@ -144,7 +135,6 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* Headline & subtitle */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 leading-tight tracking-tight mb-3">
             {t('landing_headline')}
@@ -154,7 +144,6 @@ export default function Landing() {
           </p>
         </div>
 
-        {/* CTA */}
         <button
           onClick={() => navigate('/home')}
           className="btn-primary px-10 py-3 text-base font-semibold shadow-md hover:shadow-lg transition-shadow"
@@ -164,7 +153,6 @@ export default function Landing() {
 
       </main>
 
-      {/* ── Footer ── */}
       <footer className="pb-6 text-center flex-shrink-0">
         <p className="text-xs text-warm-gray/50">{t('landing_footer')}</p>
       </footer>

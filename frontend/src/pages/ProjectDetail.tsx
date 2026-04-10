@@ -17,7 +17,6 @@ import { categoryLabel } from '../constants/categories'
 import { itemSummary, libraryItemImageUrl, fileTypeIcon } from '../utils/libraryUtils'
 import { useLibraryFilter } from '../hooks/useLibraryFilter'
 
-// Gauge removed; only needle/hook sizes remain per category
 const CRAFT_FIELDS_KEYS: Record<string, { key: string; labelKey: string }[]> = {
   KNITTING: [
     { key: 'needleSize', labelKey: 'needle_size' },
@@ -203,7 +202,6 @@ export default function ProjectDetail() {
 
       {tab === 'info' && (
         <div className="space-y-4">
-          {/* Cover images (up to 3) */}
           <div className="space-y-2">
             <div className="flex gap-2 flex-wrap">
               {(project.coverImages ?? []).map(img => (
@@ -302,7 +300,6 @@ export default function ProjectDetail() {
   )
 }
 
-// ── Materials Tab ──────────────────────────────────────────────
 function MaterialsTab({ project, projectId, onUpdate }: {
   project: Project; projectId: number; onUpdate: (p: Project) => void
 }) {
@@ -442,7 +439,6 @@ function MaterialsTab({ project, projectId, onUpdate }: {
         )
       })}
 
-      {/* Library picker */}
       <div className="card space-y-2.5">
         <h4 className="text-xs font-semibold text-sand-blue-deep uppercase tracking-wider">{t('add_from_library')}</h4>
         <LibraryFilterBar
@@ -540,7 +536,6 @@ function MaterialsTab({ project, projectId, onUpdate }: {
 }
 
 
-// ── File Preview Modal ─────────────────────────────────────────
 function FilePreviewModal({ file, projectId, onClose }: {
   file: ProjectFile; projectId: number; onClose: () => void
 }) {
@@ -621,7 +616,6 @@ function FilePreviewModal({ file, projectId, onClose }: {
   )
 }
 
-// ── Recipe Tab ─────────────────────────────────────────────────
 function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
   recipeText: string; files: ProjectFile[]; projectId: number
   onUpdate: (p: Project) => void; onRecipeChange: (v: string) => void
@@ -767,7 +761,6 @@ function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
   )
 }
 
-// ── Knit Tab (Pattern + Counter together) ─────────────────────
 function KnitTab({ project, projectId, onUpdate, category }: {
   project: Project; projectId: number; onUpdate: (p: Project) => void; category: ProjectCategory
 }) {
@@ -907,7 +900,6 @@ async function fetchAsJpegDataUri(url: string): Promise<string> {
   })
 }
 
-// ── Overview Tab ───────────────────────────────────────────────
 function OverviewTab({ project, name, description, recipeText, craftDetails, projectId }: {
   project: Project; name: string; description: string; recipeText: string
   craftDetails: Record<string, string>; projectId: number
@@ -1089,7 +1081,6 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
   )
 }
 
-// ── Round Counter Widget ───────────────────────────────────────
 function RoundCounterWidget({ counter, onSave }: {
   counter: { stitchesPerRound: number; totalRounds: number; checkedStitches: string }
   onSave: (stitchesPerRound: number, totalRounds: number, checked: number[]) => void
@@ -1232,7 +1223,6 @@ function RoundCounterWidget({ counter, onSave }: {
   )
 }
 
-// ── Pattern Grid Widget ────────────────────────────────────────
 function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, showSymbols = true, onSave }: {
   rows: number; cols: number; cellDataJson: string; showSymbols?: boolean
   onSave: (cells: PatternCell[], rows: number, cols: number) => void
@@ -1441,7 +1431,6 @@ function GridCanvas({ rows, cols, cells: _cells, cellMap, editing, onCell, showS
   )
 }
 
-// ── Read-only Pattern Grid ─────────────────────────────────────
 function PatternGridReadOnly({ rows, cols, cellDataJson, showSymbols = true }: {
   rows: number; cols: number; cellDataJson: string; showSymbols?: boolean
 }) {

@@ -17,7 +17,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Welcome */}
       <div className="bg-gradient-to-br from-sand-green/40 to-sand-blue/40 rounded-2xl p-5">
         <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
           {t('welcome_back')} <GiButterfly className="text-sand-green-dark text-xl" />
@@ -29,7 +28,6 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Category stats */}
       <div className="grid grid-cols-3 gap-3">
         {(['KNITTING', 'CROCHET', 'SEWING'] as ProjectCategory[]).map(cat => (
           <button
@@ -46,7 +44,6 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Recent projects */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-gray-800">

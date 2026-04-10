@@ -214,7 +214,6 @@ export function LibraryItemForm({ selectedType, onTypeChange, onCreated, onCance
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3 pt-1">
-      {/* Type selector */}
       <div>
       <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('lib_item_type')}<span className="text-red-500 ml-0.5">*</span></label>
       <div className="flex gap-1.5 flex-wrap">

@@ -2,8 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Theme palettes ───────────────────────────────────────────────────────── */
-/* All values are R G B components (no commas) so Tailwind opacity works.      */
+/* All values are R G B components (no commas) so Tailwind opacity works. */
 
 :root,
 [data-theme="beige"] {
@@ -54,8 +53,6 @@
   --soft:             203 189 224;  /* #CBBDE0 */
 }
 
-/* ── Landing blob animations ─────────────────────────────────────────────── */
-
 @keyframes blob-drift-1 {
   0%, 100% { transform: translate(0px,   0px)  scale(1);    }
   25%       { transform: translate(18px, -14px) scale(1.06); }
@@ -101,15 +98,11 @@
   animation: toast-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-/* ── Base ─────────────────────────────────────────────────────────────────── */
-
 @layer base {
   body {
     @apply bg-cream text-gray-800 font-sans;
   }
 }
-
-/* ── Components ───────────────────────────────────────────────────────────── */
 
 @layer components {
   .btn-primary {

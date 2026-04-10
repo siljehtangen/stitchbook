@@ -80,7 +80,6 @@ export default function NewProject() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Cover images (up to 3) */}
         <div className="flex gap-2 flex-wrap">
           {coverImages.map((img, i) => (
             <div key={i} className="relative group flex-shrink-0">
@@ -115,7 +114,6 @@ export default function NewProject() {
         </div>
         <input ref={coverRef} type="file" accept={LIBRARY_PHOTO_ACCEPT} onChange={handleCoverChange} className="hidden" />
 
-        {/* Category selector */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">{t('category_label')} <span className="text-red-500">*</span></label>
           <div className="grid grid-cols-3 gap-2">
@@ -137,7 +135,6 @@ export default function NewProject() {
           </div>
         </div>
 
-        {/* Name */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
             {t('project_name_label')} <span className="text-red-500">*</span>
@@ -150,7 +147,6 @@ export default function NewProject() {
           />
         </div>
 
-        {/* Description */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('description_label')}</label>
           <textarea
@@ -162,7 +158,6 @@ export default function NewProject() {
           />
         </div>
 
-        {/* Start date */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('start_date_label')} <span className="text-red-500">*</span></label>
           <input
