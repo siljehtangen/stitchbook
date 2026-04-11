@@ -127,18 +127,22 @@ export default function ProjectDetail() {
     )
   }
 
+  const tabs = useMemo<{ id: Tab; label: string; icon: React.ReactNode }[]>(() => {
+    if (!project) return []
+    const sewing = project.category === 'SEWING'
+    return [
+      { id: 'info', label: t('tab_info'), icon: <FaCircleInfo /> },
+      { id: 'materials', label: t('tab_materials'), icon: <PiToolboxFill /> },
+      { id: 'recipe', label: t('tab_recipe'), icon: <MdOutlineMenuBook /> },
+      ...(!sewing ? [{ id: 'knit' as Tab, label: project.category === 'KNITTING' ? t('tab_knit') : t('tab_crochet'), icon: <BsStars /> }] : []),
+      { id: 'overview', label: t('tab_overview'), icon: <BsListStars /> },
+    ]
+  }, [t, project])
+
   if (loading) return <div className="text-center py-20 text-warm-gray">{t('loading')}</div>
   if (!project) return <div className="text-center py-20 text-warm-gray">{t('project_not_found')}</div>
 
   const isSewing = project.category === 'SEWING'
-
-  const tabs = useMemo<{ id: Tab; label: string; icon: React.ReactNode }[]>(() => [
-    { id: 'info', label: t('tab_info'), icon: <FaCircleInfo /> },
-    { id: 'materials', label: t('tab_materials'), icon: <PiToolboxFill /> },
-    { id: 'recipe', label: t('tab_recipe'), icon: <MdOutlineMenuBook /> },
-    ...(!isSewing ? [{ id: 'knit' as Tab, label: project.category === 'KNITTING' ? t('tab_knit') : t('tab_crochet'), icon: <BsStars /> }] : []),
-    { id: 'overview', label: t('tab_overview'), icon: <BsListStars /> },
-  ], [t, isSewing, project.category])
 
   return (
     <div className="space-y-4">
