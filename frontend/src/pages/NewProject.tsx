@@ -6,6 +6,7 @@ import { useToast } from '../context/ToastContext'
 import type { ProjectCategory } from '../types'
 import { CATEGORY_ICONS, CATEGORIES } from '../constants/categories'
 import { MAX_LIBRARY_PHOTOS, LIBRARY_PHOTO_ACCEPT } from '../components/LibraryItemForm'
+import { CoverImageGallery } from '../components/CoverImageGallery'
 
 type CoverImageEntry = { file: File; preview: string; isMain: boolean }
 
@@ -80,38 +81,13 @@ export default function NewProject() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex gap-2 flex-wrap">
-          {coverImages.map((img, i) => (
-            <div key={i} className="relative group flex-shrink-0">
-              <img
-                src={img.preview}
-                alt=""
-                className={`w-24 h-24 object-cover rounded-xl border-2 transition-colors ${img.isMain ? 'border-sand-green' : 'border-transparent'}`}
-              />
-              <button
-                type="button"
-                onClick={() => setMainImage(i)}
-                className={`absolute top-1 left-1 w-6 h-6 rounded-full text-xs flex items-center justify-center transition-colors ${img.isMain ? 'bg-sand-green text-white' : 'bg-black/40 text-white hover:bg-sand-green'}`}
-                title={img.isMain ? t('main_image') : t('set_as_main')}
-              >★</button>
-              <button
-                type="button"
-                onClick={() => removeImage(i)}
-                className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white text-sm leading-none hidden group-hover:flex items-center justify-center transition-colors"
-              >×</button>
-            </div>
-          ))}
-          {coverImages.length < MAX_LIBRARY_PHOTOS && (
-            <button
-              type="button"
-              onClick={() => coverRef.current?.click()}
-              className="w-24 h-24 rounded-xl border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors bg-soft-brown/10 flex flex-col items-center justify-center gap-1 text-warm-gray flex-shrink-0"
-            >
-              <span className="text-xl leading-none">+</span>
-              <span className="text-xs text-center px-1">{t('upload_cover_image')}</span>
-            </button>
-          )}
-        </div>
+        <CoverImageGallery
+          items={coverImages.map((img, i) => ({ key: i, src: img.preview, isMain: img.isMain }))}
+          max={MAX_LIBRARY_PHOTOS}
+          onSetMain={key => setMainImage(key as number)}
+          onRemove={key => removeImage(key as number)}
+          onAdd={() => coverRef.current?.click()}
+        />
         <input ref={coverRef} type="file" accept={LIBRARY_PHOTO_ACCEPT} onChange={handleCoverChange} className="hidden" />
 
         <div>

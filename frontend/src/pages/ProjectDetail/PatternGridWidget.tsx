@@ -22,13 +22,19 @@ const GRID_PRESETS = [
 
 type TFn = ReturnType<typeof useTranslation>['t']
 
+const CELL_PX_LARGE = 28
+const CELL_PX_MEDIUM = 20
+const CELL_PX_SMALL = 14
+const COLS_MEDIUM_THRESHOLD = 20
+const COLS_SMALL_THRESHOLD = 35
+
 function GridCanvas({ rows, cols, cells: _cells, cellMap, editing, onCell, showSymbols, usedSymbols, t }: {
   rows: number; cols: number; cells: PatternCell[]; cellMap: Map<string, PatternCell>
   editing: boolean; onCell: (r: number, c: number) => void
   showSymbols: boolean; usedSymbols: Set<string>
   t: TFn
 }) {
-  const cellPx = cols <= 20 ? 28 : cols <= 35 ? 20 : 14
+  const cellPx = cols <= COLS_MEDIUM_THRESHOLD ? CELL_PX_LARGE : cols <= COLS_SMALL_THRESHOLD ? CELL_PX_MEDIUM : CELL_PX_SMALL
   return (
     <div className="flex gap-4 items-start">
       <div className="overflow-auto">

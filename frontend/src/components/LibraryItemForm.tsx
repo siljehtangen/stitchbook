@@ -6,6 +6,7 @@ import { COLORS, COLOR_MAP, COLOR_MAP_BY_HEX, getColorName } from '../colors'
 import { typeLabel } from '../utils/libraryUtils'
 import { GiChopsticks, GiPirateHook, GiRolledCloth } from 'react-icons/gi'
 import { PiYarnFill } from 'react-icons/pi'
+import { LibraryItemTypeFields } from './LibraryItemTypeFields'
 
 export const ITEM_TYPES: LibraryItemType[] = ['YARN', 'FABRIC', 'KNITTING_NEEDLE', 'CROCHET_HOOK']
 export const COLOR_ITEM_TYPES: LibraryItemType[] = ['YARN', 'FABRIC']
@@ -230,50 +231,18 @@ export function LibraryItemForm({ selectedType, onTypeChange, onCreated, onCance
       </div>
       </div>
 
-      {selectedType === 'YARN' && (
-        <div className="grid grid-cols-2 gap-2">
-          <Field label={t('lib_yarn_brand')}>
-            <input className="input text-sm py-1.5" value={yarnBrand} onChange={e => setYarnBrand(e.target.value)} placeholder="Sandnes Garn" />
-          </Field>
-          <Field label={t('lib_yarn_material')}>
-            <input className="input text-sm py-1.5" value={yarnMaterial} onChange={e => setYarnMaterial(e.target.value)} placeholder="Ull..." />
-          </Field>
-          <Field label={t('lib_yarn_amount_g')}>
-            <input type="number" className="input text-sm py-1.5" value={yarnAmountG} onChange={e => setYarnAmountG(e.target.value)} placeholder="100" />
-          </Field>
-          <Field label={t('lib_yarn_amount_m')}>
-            <input type="number" className="input text-sm py-1.5" value={yarnAmountM} onChange={e => setYarnAmountM(e.target.value)} placeholder="200" />
-          </Field>
-        </div>
-      )}
-
-      {selectedType === 'FABRIC' && (
-        <div className="grid grid-cols-2 gap-2">
-          <Field label={t('lib_fabric_length')}>
-            <input type="number" className="input text-sm py-1.5" value={fabricLength} onChange={e => setFabricLength(e.target.value)} placeholder="150" />
-          </Field>
-          <Field label={t('lib_fabric_width')}>
-            <input type="number" className="input text-sm py-1.5" value={fabricWidth} onChange={e => setFabricWidth(e.target.value)} placeholder="140" />
-          </Field>
-        </div>
-      )}
-
-      {selectedType === 'KNITTING_NEEDLE' && (
-        <div className="grid grid-cols-2 gap-2">
-          <Field label={t('lib_needle_size')}>
-            <input className="input text-sm py-1.5" value={needleSize} onChange={e => setNeedleSize(e.target.value)} placeholder="4.5" />
-          </Field>
-          <Field label={t('lib_circular_length')}>
-            <input type="number" className="input text-sm py-1.5" value={circularLength} onChange={e => setCircularLength(e.target.value)} placeholder="80" />
-          </Field>
-        </div>
-      )}
-
-      {selectedType === 'CROCHET_HOOK' && (
-        <Field label={t('lib_hook_size')}>
-          <input className="input text-sm py-1.5" value={hookSize} onChange={e => setHookSize(e.target.value)} placeholder="5.0" />
-        </Field>
-      )}
+      <LibraryItemTypeFields
+        itemType={selectedType}
+        yarnBrand={yarnBrand} setYarnBrand={setYarnBrand}
+        yarnMaterial={yarnMaterial} setYarnMaterial={setYarnMaterial}
+        yarnAmountG={yarnAmountG} setYarnAmountG={setYarnAmountG}
+        yarnAmountM={yarnAmountM} setYarnAmountM={setYarnAmountM}
+        fabricLength={fabricLength} setFabricLength={setFabricLength}
+        fabricWidth={fabricWidth} setFabricWidth={setFabricWidth}
+        needleSize={needleSize} setNeedleSize={setNeedleSize}
+        circularLength={circularLength} setCircularLength={setCircularLength}
+        hookSize={hookSize} setHookSize={setHookSize}
+      />
 
       {hasColors && (
         <Field label={t('lib_colors')}>

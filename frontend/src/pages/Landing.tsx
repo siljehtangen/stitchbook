@@ -1,28 +1,13 @@
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import i18n from '../i18n'
-import { useTheme, type Theme } from '../context/ThemeContext'
 import { GiChopsticks, GiPirateHook, GiSewingMachine, GiButterfly } from 'react-icons/gi'
 import { PiYarnFill } from 'react-icons/pi'
 import { LiaUserFriendsSolid } from 'react-icons/lia'
-
-const THEMES: { id: Theme; color: string }[] = [
-  { id: 'beige',    color: '#C8A87A' },
-  { id: 'blue',     color: '#6AA8C4' },
-  { id: 'green',    color: '#78A073' },
-  { id: 'lavender', color: '#9A87CA' },
-]
+import { LanguageSwitcher, ThemeColorPicker } from '../components/LanguageSwitcher'
 
 export default function Landing() {
   const navigate = useNavigate()
   const { t } = useTranslation()
-  const { theme, setTheme } = useTheme()
-  const currentLang = i18n.language
-
-  function setLang(lang: string) {
-    i18n.changeLanguage(lang)
-    localStorage.setItem('lang', lang)
-  }
 
   const orbitIcons = [
     {
@@ -68,34 +53,8 @@ export default function Landing() {
           <span className="text-lg font-semibold text-gray-800 tracking-tight">{t('app_name')}</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            {THEMES.map(th => (
-              <button
-                key={th.id}
-                onClick={() => setTheme(th.id)}
-                className={`w-4 h-4 rounded-full transition-all hover:scale-110 ${
-                  theme === th.id ? 'ring-2 ring-offset-1 ring-gray-400 scale-110' : 'opacity-55 hover:opacity-90'
-                }`}
-                style={{ backgroundColor: th.color }}
-                aria-label={th.id}
-              />
-            ))}
-          </div>
-          <div className="flex items-center bg-soft-brown/20 rounded-full p-0.5 gap-0.5">
-            {(['no', 'en'] as const).map(lang => (
-              <button
-                key={lang}
-                onClick={() => setLang(lang)}
-                className={`text-xs font-semibold px-3 py-1 rounded-full transition-all ${
-                  currentLang === lang
-                    ? 'bg-white text-gray-800 shadow-sm'
-                    : 'text-warm-gray hover:text-gray-700'
-                }`}
-              >
-                {lang.toUpperCase()}
-              </button>
-            ))}
-          </div>
+          <ThemeColorPicker />
+          <LanguageSwitcher />
         </div>
       </header>
 

@@ -5,6 +5,7 @@ import { ThemeProvider } from './context/ThemeContext'
 import { ToastProvider } from './context/ToastContext'
 import { ConfirmDialogProvider } from './context/ConfirmDialogContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 const Landing = lazy(() => import('./pages/Landing'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
@@ -28,6 +29,7 @@ function ProtectedRoutes() {
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <ThemeProvider>
       <ToastProvider>
       <ConfirmDialogProvider>
@@ -52,5 +54,6 @@ export default function App() {
       </ConfirmDialogProvider>
       </ToastProvider>
     </ThemeProvider>
+    </ErrorBoundary>
   )
 }

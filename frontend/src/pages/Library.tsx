@@ -1,20 +1,20 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../context/ToastContext'
-import { useConfirmDialog } from '../context/ConfirmDialogContext'
 import { libraryApi } from '../api'
 import type { LibraryItem, LibraryItemType } from '../types'
 import { ITEM_TYPES, TYPE_ICONS, Field, ColorPicker, LibraryItemForm, MAX_LIBRARY_PHOTOS, LIBRARY_PHOTO_ACCEPT, COLOR_ITEM_TYPES } from '../components/LibraryItemForm'
 import { LibraryFilterBar } from '../components/LibraryFilterBar'
+import { LibraryItemTypeFields } from '../components/LibraryItemTypeFields'
 import { itemSummary, typeLabel, libraryItemImageUrl, isImageUrl, fileTypeIconFromUrl } from '../utils/libraryUtils'
 import { useLibraryFilter } from '../hooks/useLibraryFilter'
+import { useConfirmDelete } from '../hooks/useConfirmDelete'
 import { resolveColorDisplay } from '../colors'
 import { useAsyncData } from '../hooks/useAsyncData'
 
 export default function Library() {
   const { t } = useTranslation()
   const { showToast } = useToast()
-  const { confirm } = useConfirmDialog()
   const { data: items, setData: setItems, loading, error } = useAsyncData(() => libraryApi.getAll(), [] as LibraryItem[])
   const [adding, setAdding] = useState(false)
   const [selectedType, setSelectedType] = useState<LibraryItemType>('YARN')
@@ -26,23 +26,24 @@ export default function Library() {
     items: filtered.filter(i => i.itemType === type),
   })).filter(g => g.items.length > 0), [filtered])
 
-  const handleDelete = useCallback(async (id: number) => {
-    const ok = await confirm({
-      message: t('lib_delete_confirm'),
-      confirmLabel: t('delete'),
-      tone: 'danger',
-    })
-    if (!ok) return
-    await libraryApi.delete(id)
-    setItems(prev => prev.filter(i => i.id !== id))
-    showToast(t('lib_item_deleted_toast'))
-  }, [confirm, t, showToast, setItems])
+  const confirmDelete = useConfirmDelete()
 
-  function handleCreated(item: LibraryItem) {
+  const handleDelete = useCallback(async (id: number) => {
+    await confirmDelete(
+      t('lib_delete_confirm'),
+      async () => {
+        await libraryApi.delete(id)
+        setItems(prev => prev.filter(i => i.id !== id))
+      },
+      'lib_item_deleted_toast',
+    )
+  }, [confirmDelete, t, setItems])
+
+  const handleCreated = useCallback((item: LibraryItem) => {
     setItems(prev => [item, ...prev])
     setAdding(false)
     showToast(t('lib_item_created_toast'))
-  }
+  }, [setItems, showToast, t])
 
   const handleUpdated = useCallback((item: LibraryItem) => {
     setItems(prev => prev.map(i => i.id === item.id ? item : i))
@@ -123,7 +124,7 @@ const LibraryCard = memo(function LibraryCard({ item, subtitle, onDelete, onImag
 }) {
   const { t, i18n } = useTranslation()
   const { showToast } = useToast()
-  const { confirm } = useConfirmDialog()
+  const confirmDelete = useConfirmDelete()
   const fileRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -229,20 +230,13 @@ const LibraryCard = memo(function LibraryCard({ item, subtitle, onDelete, onImag
                 >★</button>
                 <button
                   type="button"
-                  onClick={async () => {
-                    const ok = await confirm({
-                      message: t('delete_library_photo_confirm'),
-                      confirmLabel: t('dialog_btn_remove'),
-                      tone: 'danger',
-                    })
-                    if (!ok) return
-                    try {
+                  onClick={() => confirmDelete(
+                    t('delete_library_photo_confirm'),
+                    async () => {
                       onUpdated(await libraryApi.deleteLibraryImage(item.id, img.id))
-                      showToast(t('library_photo_removed_toast'))
-                    } catch {
-                      showToast(t('upload_failed'), 'info')
-                    }
-                  }}
+                    },
+                    'library_photo_removed_toast',
+                  )}
                   className="absolute top-0.5 right-0.5 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white text-sm leading-none hidden group-hover:flex items-center justify-center transition-colors"
                 >×</button>
               </div>
@@ -277,49 +271,18 @@ const LibraryCard = memo(function LibraryCard({ item, subtitle, onDelete, onImag
           </Field>
         )}
 
-        {item.itemType === 'YARN' && (
-          <div className="grid grid-cols-2 gap-2">
-            <Field label={t('lib_yarn_brand')}>
-              <input className="input text-sm py-1.5 w-full" value={yarnBrand} onChange={e => setYarnBrand(e.target.value)} placeholder={t('lib_yarn_brand')} />
-            </Field>
-            <Field label={t('lib_yarn_material')}>
-              <input className="input text-sm py-1.5 w-full" value={yarnMaterial} onChange={e => setYarnMaterial(e.target.value)} placeholder={t('lib_yarn_material')} />
-            </Field>
-            <Field label={t('lib_yarn_amount_g')}>
-              <input type="number" className="input text-sm py-1.5 w-full" value={yarnAmountG} onChange={e => setYarnAmountG(e.target.value)} placeholder={t('lib_yarn_amount_g')} />
-            </Field>
-            <Field label={t('lib_yarn_amount_m')}>
-              <input type="number" className="input text-sm py-1.5 w-full" value={yarnAmountM} onChange={e => setYarnAmountM(e.target.value)} placeholder={t('lib_yarn_amount_m')} />
-            </Field>
-          </div>
-        )}
-        {item.itemType === 'FABRIC' && (
-          <div className="grid grid-cols-2 gap-2">
-            <Field label={t('lib_fabric_length')}>
-              <input type="number" className="input text-sm py-1.5 w-full" value={fabricLength} onChange={e => setFabricLength(e.target.value)} placeholder={t('lib_fabric_length')} />
-            </Field>
-            <Field label={t('lib_fabric_width')}>
-              <input type="number" className="input text-sm py-1.5 w-full" value={fabricWidth} onChange={e => setFabricWidth(e.target.value)} placeholder={t('lib_fabric_width')} />
-            </Field>
-          </div>
-        )}
-        {item.itemType === 'KNITTING_NEEDLE' && (
-          <div className="grid grid-cols-2 gap-2">
-            <Field label={t('lib_needle_size')}>
-              <input className="input text-sm py-1.5 w-full" value={needleSize} onChange={e => setNeedleSize(e.target.value)} placeholder={t('lib_needle_size')} />
-            </Field>
-            <Field label={t('lib_circular_length')}>
-              <input type="number" className="input text-sm py-1.5 w-full" value={circularLength} onChange={e => setCircularLength(e.target.value)} placeholder={t('lib_circular_length')} />
-            </Field>
-          </div>
-        )}
-        {item.itemType === 'CROCHET_HOOK' && (
-          <div className="grid grid-cols-2 gap-2">
-            <Field label={t('lib_hook_size')}>
-              <input className="input text-sm py-1.5 w-full" value={hookSize} onChange={e => setHookSize(e.target.value)} placeholder={t('lib_hook_size')} />
-            </Field>
-          </div>
-        )}
+        <LibraryItemTypeFields
+          itemType={item.itemType as LibraryItemType}
+          yarnBrand={yarnBrand} setYarnBrand={setYarnBrand}
+          yarnMaterial={yarnMaterial} setYarnMaterial={setYarnMaterial}
+          yarnAmountG={yarnAmountG} setYarnAmountG={setYarnAmountG}
+          yarnAmountM={yarnAmountM} setYarnAmountM={setYarnAmountM}
+          fabricLength={fabricLength} setFabricLength={setFabricLength}
+          fabricWidth={fabricWidth} setFabricWidth={setFabricWidth}
+          needleSize={needleSize} setNeedleSize={setNeedleSize}
+          circularLength={circularLength} setCircularLength={setCircularLength}
+          hookSize={hookSize} setHookSize={setHookSize}
+        />
         <div className="flex gap-2">
           <button onClick={handleSave} disabled={saving} className="btn-primary text-sm flex-1">
             {saving ? t('saving') : t('save')}

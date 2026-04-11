@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Field } from '../../components/LibraryItemForm'
+import { useDebouncedCallback } from '../../hooks/useDebouncedCallback'
 
 export function RoundCounterWidget({ counter, onSave }: {
   counter: { stitchesPerRound: number; totalRounds: number; checkedStitches: string }
@@ -22,11 +23,11 @@ export function RoundCounterWidget({ counter, onSave }: {
   const checkedRef = useRef(checked)
   const sprRef = useRef(spr)
   const roundsRef = useRef(rounds)
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => {
-    return () => { if (saveTimer.current) clearTimeout(saveTimer.current) }
-  }, [])
+  const debouncedSave = useDebouncedCallback(
+    (spr: number, rounds: number, checked: number[]) => onSave(spr, rounds, checked),
+    800,
+  )
 
   useEffect(() => {
     const newSpr = counter.stitchesPerRound
@@ -43,11 +44,7 @@ export function RoundCounterWidget({ counter, onSave }: {
     if (next.has(idx)) next.delete(idx); else next.add(idx)
     checkedRef.current = next
     setChecked(new Set(next))
-
-    if (saveTimer.current) clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(() => {
-      onSave(sprRef.current, roundsRef.current, Array.from(checkedRef.current))
-    }, 800)
+    debouncedSave(sprRef.current, roundsRef.current, Array.from(next))
   }
 
   function handleConfigure() {

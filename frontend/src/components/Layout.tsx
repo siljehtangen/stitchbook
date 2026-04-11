@@ -1,51 +1,14 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import i18n from '../i18n'
 import { FaHome, FaUser } from 'react-icons/fa'
 import { ImBooks } from 'react-icons/im'
 import { LiaUserFriendsSolid } from 'react-icons/lia'
 import { GrProjects } from 'react-icons/gr'
-import { useTheme, type Theme } from '../context/ThemeContext'
-
-const THEMES: { id: Theme; color: string }[] = [
-  { id: 'beige',    color: '#C8A87A' },
-  { id: 'blue',     color: '#6AA8C4' },
-  { id: 'green',    color: '#78A073' },
-  { id: 'lavender', color: '#9A87CA' },
-]
-
-function LanguageSwitcher() {
-  const { i18n: i18nInstance } = useTranslation()
-  const current = i18nInstance.language
-
-  function setLang(lang: string) {
-    i18n.changeLanguage(lang)
-    localStorage.setItem('lang', lang)
-  }
-
-  return (
-    <div className="flex items-center bg-soft-brown/20 rounded-full p-0.5 gap-0.5">
-      {(['no', 'en'] as const).map(lang => (
-        <button
-          key={lang}
-          onClick={() => setLang(lang)}
-          className={`text-xs font-semibold px-3 py-1 rounded-full transition-all ${
-            current === lang
-              ? 'bg-white text-gray-800 shadow-sm'
-              : 'text-warm-gray hover:text-gray-700'
-          }`}
-        >
-          {lang.toUpperCase()}
-        </button>
-      ))}
-    </div>
-  )
-}
+import { LanguageSwitcher, ThemeColorPicker } from './LanguageSwitcher'
 
 export default function Layout() {
   const navigate = useNavigate()
   const { t } = useTranslation()
-  const { theme, setTheme } = useTheme()
 
   const navItems = [
     { to: '/home', label: t('nav_home'), icon: <FaHome />, exact: true },
@@ -61,19 +24,7 @@ export default function Layout() {
           <LiaUserFriendsSolid className="text-sand-green-dark text-2xl" /> {t('app_name')}
         </h1>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            {THEMES.map(th => (
-              <button
-                key={th.id}
-                onClick={() => setTheme(th.id)}
-                className={`w-4 h-4 rounded-full transition-all hover:scale-110 ${
-                  theme === th.id ? 'ring-2 ring-offset-1 ring-gray-400 scale-110' : 'opacity-60 hover:opacity-100'
-                }`}
-                style={{ backgroundColor: th.color }}
-                aria-label={th.id}
-              />
-            ))}
-          </div>
+          <ThemeColorPicker />
           <LanguageSwitcher />
         </div>
       </header>

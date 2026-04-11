@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../../context/ToastContext'
-import { useConfirmDialog } from '../../context/ConfirmDialogContext'
 import { projectsApi, libraryApi } from '../../api'
+import { useConfirmDelete } from '../../hooks/useConfirmDelete'
 import { libraryItemImagesForProject } from '../../projectOverviewMedia'
 import { COLOR_MAP } from '../../colors'
 import type { Project, LibraryItem, LibraryItemType } from '../../types'
@@ -16,7 +16,7 @@ export function MaterialsTab({ project, projectId, onUpdate }: {
 }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
-  const { confirm } = useConfirmDialog()
+  const confirmDelete = useConfirmDelete()
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([])
   const [saving, setSaving] = useState(false)
   const [creatingInLib, setCreatingInLib] = useState(false)
@@ -128,20 +128,13 @@ export function MaterialsTab({ project, projectId, onUpdate }: {
               </div>
               <button
                 type="button"
-                onClick={async () => {
-                  const ok = await confirm({
-                    message: t('delete_material_confirm', { name: m.type }),
-                    confirmLabel: t('dialog_btn_remove'),
-                    tone: 'danger',
-                  })
-                  if (!ok) return
-                  try {
+                onClick={() => confirmDelete(
+                  t('delete_material_confirm', { name: m.type }),
+                  async () => {
                     onUpdate(await projectsApi.deleteMaterial(projectId, m.id))
-                    showToast(t('material_removed_toast'))
-                  } catch {
-                    showToast(t('upload_failed'), 'info')
-                  }
-                }}
+                  },
+                  'material_removed_toast',
+                )}
                 className="text-warm-gray hover:text-red-400 text-xl px-1 leading-none flex-shrink-0"
                 title={t('delete')}
               >×</button>

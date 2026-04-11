@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../../context/ToastContext'
-import { useConfirmDialog } from '../../context/ConfirmDialogContext'
+import { useConfirmDelete } from '../../hooks/useConfirmDelete'
 import { projectsApi, fileUrl } from '../../api'
 import { fileTypeIcon } from '../../utils/libraryUtils'
 import type { Project, ProjectFile } from '../../types'
@@ -14,7 +14,7 @@ export function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChan
 }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
-  const { confirm } = useConfirmDialog()
+  const confirmDelete = useConfirmDelete()
   const [uploading, setUploading] = useState(false)
   const [replacingId, setReplacingId] = useState<number | null>(null)
   const [previewFile, setPreviewFile] = useState<ProjectFile | null>(null)
@@ -118,20 +118,13 @@ export function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChan
                     title={t('replace_file')}
                   >↺</button>
                   <button
-                    onClick={async () => {
-                      const ok = await confirm({
-                        message: t('delete_attachment_confirm', { name: f.originalName }),
-                        confirmLabel: t('dialog_btn_remove'),
-                        tone: 'danger',
-                      })
-                      if (!ok) return
-                      try {
+                    onClick={() => confirmDelete(
+                      t('delete_attachment_confirm', { name: f.originalName }),
+                      async () => {
                         onUpdate(await projectsApi.deleteFile(projectId, f.id))
-                        showToast(t('attachment_removed_toast'))
-                      } catch {
-                        showToast(t('upload_failed'), 'info')
-                      }
-                    }}
+                      },
+                      'attachment_removed_toast',
+                    )}
                     className="text-warm-gray hover:text-red-400 text-xl px-1 leading-none flex-shrink-0"
                     title={t('delete')}
                   >×</button>
