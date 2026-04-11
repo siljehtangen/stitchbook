@@ -16,18 +16,14 @@ export interface LibraryItem {
   name: string
   images?: LibraryItemImage[]
   colors: string[]
-  // Yarn
   yarnMaterial?: string
   yarnBrand?: string
   yarnAmountG?: number
   yarnAmountM?: number
-  // Fabric
   fabricWidthCm?: number
   fabricLengthCm?: number
-  // Knitting needle
   needleSizeMm?: string
   circularLengthCm?: number
-  // Crochet hook
   hookSizeMm?: string
   createdAt: number
 }

@@ -1479,7 +1479,6 @@ function PatternGridReadOnly({ rows, cols, cellDataJson, showSymbols = true }: {
   )
 }
 
-// ── Shared helpers ─────────────────────────────────────────────
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>

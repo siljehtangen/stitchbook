@@ -4,15 +4,12 @@ export interface ColorOption {
   hex: string
 }
 
-// Nature tones first, then all common colors
 export const COLORS: ColorOption[] = [
-  // Hvite / kremtoner
   { name: 'Hvit',      nameEn: 'White',       hex: '#FFFFFF' },
   { name: 'Kremhvit',  nameEn: 'Cream White', hex: '#FFF8F0' },
   { name: 'Elfenben',  nameEn: 'Ivory',       hex: '#FFFFF0' },
   { name: 'Perle',     nameEn: 'Pearl',       hex: '#F5F0EA' },
 
-  // Beige / brun / nøytral
   { name: 'Beige',         nameEn: 'Beige',          hex: '#F5F5DC' },
   { name: 'Kald beige',    nameEn: 'Cool Beige',     hex: '#E8E0D5' },
   { name: 'Lin',           nameEn: 'Linen',          hex: '#DDD5C8' },
@@ -28,13 +25,11 @@ export const COLORS: ColorOption[] = [
   { name: 'Mørkebrun',     nameEn: 'Dark Brown',     hex: '#4A2C0A' },
   { name: 'Terrakotta',    nameEn: 'Terracotta',     hex: '#CC4E2A' },
 
-  // Grå / sort
   { name: 'Lysegrå',  nameEn: 'Light Grey', hex: '#D3D3D3' },
   { name: 'Grå',      nameEn: 'Grey',       hex: '#9E9E9E' },
   { name: 'Mørkegrå', nameEn: 'Dark Grey',  hex: '#616161' },
   { name: 'Sort',     nameEn: 'Black',      hex: '#212121' },
 
-  // Blå
   { name: 'Himmelblå', nameEn: 'Sky Blue',    hex: '#87CEEB' },
   { name: 'Lyseblå',   nameEn: 'Light Blue',  hex: '#ADD8E6' },
   { name: 'Klar blå',  nameEn: 'Bright Blue', hex: '#0066CC' },
@@ -44,7 +39,6 @@ export const COLORS: ColorOption[] = [
   { name: 'Petrol',    nameEn: 'Petrol',      hex: '#005F73' },
   { name: 'Turkis',    nameEn: 'Turquoise',   hex: '#40E0D0' },
 
-  // Grønn
   { name: 'Mint',       nameEn: 'Mint',         hex: '#A8D8A8' },
   { name: 'Lysegrønn',  nameEn: 'Light Green',  hex: '#90EE90' },
   { name: 'Sage grønn', nameEn: 'Sage Green',   hex: '#9B9B7A' },
@@ -54,7 +48,6 @@ export const COLORS: ColorOption[] = [
   { name: 'Skoggrønn',  nameEn: 'Forest Green', hex: '#355E3B' },
   { name: 'Oliven',     nameEn: 'Olive',        hex: '#6B7A3E' },
 
-  // Rosa / rød / lilla
   { name: 'Lavendel',  nameEn: 'Lavender',   hex: '#E6E6FA' },
   { name: 'Lilla',     nameEn: 'Purple',     hex: '#9B59B6' },
   { name: 'Fiolett',   nameEn: 'Violet',     hex: '#6A0DAD' },
@@ -66,7 +59,6 @@ export const COLORS: ColorOption[] = [
   { name: 'Rød',       nameEn: 'Red',        hex: '#DC143C' },
   { name: 'Burgunder', nameEn: 'Burgundy',   hex: '#722F37' },
 
-  // Gul / oransje
   { name: 'Gul',     nameEn: 'Yellow', hex: '#FFD700' },
   { name: 'Sennep',  nameEn: 'Mustard', hex: '#D4A017' },
   { name: 'Oransje', nameEn: 'Orange',  hex: '#FFA500' },
