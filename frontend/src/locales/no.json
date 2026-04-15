@@ -31,6 +31,10 @@
   "row_counter": "Runde {{current}} / {{total}}",
 
   "projects_heading": "Prosjekter",
+  "projects_mode_mine": "Mine prosjekter",
+  "projects_mode_friends": "Venner",
+  "projects_friends_empty": "Du har ingen venner ennå. Legg til venner for å se prosjektene deres her.",
+  "projects_go_to_friends": "Gå til venner",
   "filter_all": "Alle",
   "no_projects_found": "Ingen prosjekter funnet",
   "add_project": "Legg til prosjekt",

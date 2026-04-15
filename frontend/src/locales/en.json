@@ -31,6 +31,10 @@
   "row_counter": "Round {{current}} / {{total}}",
 
   "projects_heading": "Projects",
+  "projects_mode_mine": "My Projects",
+  "projects_mode_friends": "Friends",
+  "projects_friends_empty": "You have no friends yet. Add friends to see their projects here.",
+  "projects_go_to_friends": "Go to Friends",
   "filter_all": "All",
   "no_projects_found": "No projects found",
   "add_project": "Add project",
