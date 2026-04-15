@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../../context/ToastContext'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
@@ -8,9 +8,43 @@ import type { Project, ProjectFile } from '../../types'
 import { Field } from '../../components/LibraryItemForm'
 import { FilePreviewModal } from './FilePreviewModal'
 
-export function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
-  recipeText: string; files: ProjectFile[]; projectId: number
-  onUpdate: (p: Project) => void; onRecipeChange: (v: string) => void
+function PinterestBoardEmbed({ url }: { url: string }) {
+  const embedRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!url) return
+    if (!document.getElementById('pinterest-pinit-js')) {
+      const script = document.createElement('script')
+      script.id = 'pinterest-pinit-js'
+      script.src = '//assets.pinterest.com/js/pinit.js'
+      script.async = true
+      script.defer = true
+      document.body.appendChild(script)
+    }
+    const timer = setTimeout(() => {
+      (window as { PinUtils?: { build: () => void } }).PinUtils?.build()
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [url])
+
+  if (!url) return null
+
+  return (
+    <div ref={embedRef} key={url} className="overflow-hidden rounded-xl">
+      <a
+        data-pin-do="embedBoard"
+        data-pin-board-width="400"
+        data-pin-scale-height="240"
+        data-pin-scale-width="80"
+        href={url}
+      />
+    </div>
+  )
+}
+
+export function RecipeTab({ recipeText, pinterestBoardUrl, files, projectId, onUpdate, onRecipeChange, onPinterestChange }: {
+  recipeText: string; pinterestBoardUrl: string; files: ProjectFile[]; projectId: number
+  onUpdate: (p: Project) => void; onRecipeChange: (v: string) => void; onPinterestChange: (v: string) => void
 }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
@@ -71,6 +105,25 @@ export function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChan
         />
       </Field>
       <p className="text-xs text-warm-gray text-right -mt-2">{t('auto_saving')}</p>
+
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-gray-700">{t('pinterest_label')}</span>
+        </div>
+        <input
+          className="input"
+          type="url"
+          value={pinterestBoardUrl}
+          onChange={e => onPinterestChange(e.target.value)}
+          placeholder={t('pinterest_placeholder')}
+        />
+        {pinterestBoardUrl && (
+          <div className="mt-3">
+            <PinterestBoardEmbed url={pinterestBoardUrl} />
+            <p className="text-xs text-warm-gray mt-1">{t('pinterest_hint')}</p>
+          </div>
+        )}
+      </div>
 
       <div>
         <div className="flex items-center justify-between mb-2">

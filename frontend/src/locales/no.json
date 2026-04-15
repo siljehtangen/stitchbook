@@ -77,6 +77,9 @@
 
   "recipe_label": "Oppskrift og notater",
   "recipe_placeholder": "Skriv her...",
+  "pinterest_label": "Pinterest-brett",
+  "pinterest_placeholder": "Lim inn en Pinterest-brett-URL, f.eks. https://www.pinterest.com/brukernavn/brettnavn/",
+  "pinterest_hint": "Klikk på et bilde for å åpne det på Pinterest i en ny fane.",
   "attachments_label": "Vedlegg",
   "uploading": "Laster opp...",
   "upload_file": "+ Last opp fil",

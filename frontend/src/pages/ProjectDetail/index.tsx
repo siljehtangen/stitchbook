@@ -33,7 +33,7 @@ export default function ProjectDetail() {
   const projectId = parseInt(id!)
 
 
-  const [textFields, setTextFields] = useState({ name: '', description: '', notes: '', tags: '', recipeText: '' })
+  const [textFields, setTextFields] = useState({ name: '', description: '', notes: '', tags: '', recipeText: '', pinterestBoardUrl: '' })
   const textRef = useRef(textFields)
 
   const [craftDetails, setCraftDetails] = useState<Record<string, string>>({})
@@ -50,7 +50,7 @@ export default function ProjectDetail() {
 
   useEffect(() => {
     projectsApi.getOne(projectId).then(p => {
-      const fields = { name: p.name, description: p.description, notes: p.notes, tags: p.tags, recipeText: p.recipeText }
+      const fields = { name: p.name, description: p.description, notes: p.notes, tags: p.tags, recipeText: p.recipeText, pinterestBoardUrl: p.pinterestBoardUrl ?? '' }
       textRef.current = fields
       setTextFields(fields)
       setProject(p)
@@ -202,10 +202,12 @@ export default function ProjectDetail() {
       {tab === 'recipe' && (
         <RecipeTab
           recipeText={textFields.recipeText}
+          pinterestBoardUrl={textFields.pinterestBoardUrl}
           files={project.files}
           projectId={projectId}
           onUpdate={setProject}
           onRecipeChange={v => handleInfoChange('recipeText', v)}
+          onPinterestChange={v => handleInfoChange('pinterestBoardUrl', v)}
         />
       )}
 
