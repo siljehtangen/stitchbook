@@ -68,11 +68,12 @@ export interface PdfProps {
   language: string
   /** Pre-fetched base64 data URIs keyed by original URL, to avoid CORS issues at render time */
   imageData: Record<string, string>
+  ownerLabel?: string
 }
 
 export function ProjectOverviewPdf({
   project, name, description, recipeText, filledCraftFields,
-  craftDetails, projectId, categoryLabel, labels, language, imageData,
+  craftDetails, projectId, categoryLabel, labels, language, imageData, ownerLabel,
 }: PdfProps) {
   const hasMaterials = filledCraftFields.length > 0 || project.materials.length > 0
   const hasRecipe = !!recipeText
@@ -105,7 +106,7 @@ export function ProjectOverviewPdf({
     <Document>
       <Page size="A4" style={S.page}>
         <Text style={S.h1}>{name}</Text>
-        <Text style={S.meta}>{categoryLabel}</Text>
+        <Text style={S.meta}>{categoryLabel}{ownerLabel ? `  ·  ${ownerLabel}` : ''}</Text>
 
         <View style={S.coverImages}>
           {coverUrls.map((url, i) => (
