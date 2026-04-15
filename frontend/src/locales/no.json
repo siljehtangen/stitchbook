@@ -263,5 +263,10 @@
   "friends_list_heading": "Venner",
   "friends_empty": "Du har ingen venner ennå. Send en forespørsel ovenfor!",
   "friends_remove": "Fjern venn",
-  "friends_no_public_projects": "Denne vennen har ingen offentlige prosjekter ennå."
+  "friends_no_public_projects": "Denne vennen har ingen offentlige prosjekter ennå.",
+  "friends_filter_all": "Alle venner",
+  "friends_filter_placeholder": "Søk etter venner...",
+  "friend_project_readonly": "Kun visning",
+  "no_recipe_yet": "Ingen oppskrift eller vedlegg lagt til.",
+  "no_knit_content_yet": "Ingen strikkinnhold lagt til ennå."
 }

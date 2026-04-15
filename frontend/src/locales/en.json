@@ -263,5 +263,10 @@
   "friends_list_heading": "Friends",
   "friends_empty": "You have no friends yet. Send a request above!",
   "friends_remove": "Remove friend",
-  "friends_no_public_projects": "This friend has no public projects yet."
+  "friends_no_public_projects": "This friend has no public projects yet.",
+  "friends_filter_all": "All friends",
+  "friends_filter_placeholder": "Search friends...",
+  "friend_project_readonly": "View only",
+  "no_recipe_yet": "No recipe or attachments added.",
+  "no_knit_content_yet": "No knit content added yet."
 }
