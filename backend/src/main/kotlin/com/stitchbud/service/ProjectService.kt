@@ -83,6 +83,7 @@ class ProjectService(
         req.startDate?.let { project.startDate = it }
         req.endDate?.let { project.endDate = it }
         if (req.clearEndDate) project.endDate = null
+        req.isPublic?.let { project.isPublic = it }
         project.updatedAt = System.currentTimeMillis()
         return projectRepository.save(project).toDto()
     }
@@ -377,7 +378,9 @@ class ProjectService(
             rowCounter = rowCounter?.let { RowCounterDto(it.id, it.stitchesPerRound, it.totalRounds, it.checkedStitches) },
             patternGrids = patternGrids.sortedBy { it.id }.map { PatternGridDto(it.id, it.rows, it.cols, it.cellData) },
             startDate = startDate, endDate = endDate,
-            createdAt = createdAt, updatedAt = updatedAt
+            isPublic = isPublic,
+            createdAt = createdAt, updatedAt = updatedAt,
+            userId = userId
         )
     }
 }
