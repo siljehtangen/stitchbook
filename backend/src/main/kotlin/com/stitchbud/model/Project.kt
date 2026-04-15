@@ -42,6 +42,7 @@ data class Project(
     var images: MutableList<ProjectImage> = mutableListOf(),
     var startDate: Long? = null,
     var endDate: Long? = null,
+    var isPublic: Boolean = false,
     var createdAt: Long = System.currentTimeMillis(),
     var updatedAt: Long = System.currentTimeMillis()
 )

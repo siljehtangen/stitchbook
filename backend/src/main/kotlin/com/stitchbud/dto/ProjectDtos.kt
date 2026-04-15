@@ -65,8 +65,10 @@ data class ProjectDto(
     val patternGrids: List<PatternGridDto> = emptyList(),
     val startDate: Long? = null,
     val endDate: Long? = null,
+    val isPublic: Boolean = false,
     val createdAt: Long = 0,
-    val updatedAt: Long = 0
+    val updatedAt: Long = 0,
+    val userId: String = ""
 )
 
 data class CreateProjectRequest(
@@ -87,7 +89,8 @@ data class UpdateProjectRequest(
     val craftDetails: String? = null,
     val startDate: Long? = null,
     val endDate: Long? = null,
-    val clearEndDate: Boolean = false
+    val clearEndDate: Boolean = false,
+    val isPublic: Boolean? = null
 )
 
 data class UpdateRowCounterRequest(
