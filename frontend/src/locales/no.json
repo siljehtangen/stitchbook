@@ -231,6 +231,7 @@
   "reset_data_btn": "Nullstill dataene mine",
   "reset_data_confirm_warning": "Er du sikker? Alle prosjekter og bibliotekselementer vil bli slettet permanent",
   "reset_data_confirm_btn": "Ja, nullstill alt",
+  "data_reset_toast": "All data er nullstilt",
   "resetting": "Nullstiller...",
 
   "delete_account_heading": "Slett konto",
@@ -260,6 +261,8 @@
   "friends_accept": "Godta",
   "friends_decline": "Avslå",
   "friends_accepted": "Venn lagt til!",
+  "friends_declined_toast": "Venneforespørsel avslått",
+  "friends_removed_toast": "Venn fjernet",
   "friends_action_failed": "Noe gikk galt. Prøv igjen.",
   "friends_list_heading": "Venner",
   "friends_empty": "Du har ingen venner ennå. Send en forespørsel ovenfor!",

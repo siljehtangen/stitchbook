@@ -231,6 +231,7 @@
   "reset_data_btn": "Reset my data",
   "reset_data_confirm_warning": "Are you sure? All your projects and library items will be permanently deleted",
   "reset_data_confirm_btn": "Yes, reset everything",
+  "data_reset_toast": "All data has been reset",
   "resetting": "Resetting...",
 
   "delete_account_heading": "Delete account",
@@ -260,6 +261,8 @@
   "friends_accept": "Accept",
   "friends_decline": "Decline",
   "friends_accepted": "Friend added!",
+  "friends_declined_toast": "Friend request declined",
+  "friends_removed_toast": "Friend removed",
   "friends_action_failed": "Something went wrong. Please try again.",
   "friends_list_heading": "Friends",
   "friends_empty": "You have no friends yet. Send a request above!",

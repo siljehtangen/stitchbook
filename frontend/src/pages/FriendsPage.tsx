@@ -46,9 +46,9 @@ export default function FriendsPage() {
       const newFriend = await friendsApi.acceptRequest(req.friendshipId)
       setRequests(r => r.filter(r => r.friendshipId !== req.friendshipId))
       setFriends(f => [...f, newFriend])
-      showToast(t('friend_accepted'))
+      showToast(t('friends_accepted'))
     } catch {
-      showToast(t('friend_action_failed'), 'info')
+      showToast(t('friends_action_failed'), 'info')
     }
   }
 
@@ -56,8 +56,9 @@ export default function FriendsPage() {
     try {
       await friendsApi.remove(req.friendshipId)
       setRequests(r => r.filter(r => r.friendshipId !== req.friendshipId))
+      showToast(t('friends_declined_toast'))
     } catch {
-      showToast(t('friend_action_failed'), 'info')
+      showToast(t('friends_action_failed'), 'info')
     }
   }
 
@@ -65,8 +66,9 @@ export default function FriendsPage() {
     try {
       await friendsApi.remove(friend.friendshipId)
       setFriends(f => f.filter(f => f.friendshipId !== friend.friendshipId))
+      showToast(t('friends_removed_toast'))
     } catch {
-      showToast(t('friend_action_failed'), 'info')
+      showToast(t('friends_action_failed'), 'info')
     }
   }
 

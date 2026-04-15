@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
 import { accountApi } from '../api'
 
 export default function ProfilePage() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const { showToast } = useToast()
   const [confirmReset, setConfirmReset] = useState(false)
   const [resetting, setResetting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -29,6 +31,7 @@ export default function ProfilePage() {
     setResetting(true)
     try {
       await accountApi.resetData()
+      showToast(t('data_reset_toast'))
     } finally {
       setResetting(false)
       setConfirmReset(false)
