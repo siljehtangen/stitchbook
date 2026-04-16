@@ -132,7 +132,7 @@ function FriendProjectCard({ project, onClick, friendName }: { project: Project;
   const { t } = useTranslation()
   const coverUrls = projectCoverImageUrls(project)
   return (
-    <div className="card flex items-center gap-3 cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
+    <div className="card flex items-center gap-3 cursor-pointer hover:shadow-md transition-all group" onClick={onClick}>
       {coverUrls[0] ? (
         <img src={coverUrls[0]} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0" loading="lazy" />
       ) : (
@@ -148,6 +148,11 @@ function FriendProjectCard({ project, onClick, friendName }: { project: Project;
         {project.description && (
           <p className="text-xs text-gray-600 truncate mt-0.5">{project.description}</p>
         )}
+      </div>
+      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-soft-brown/10 group-hover:bg-soft-brown/20 flex items-center justify-center transition-colors ml-1">
+        <svg className="w-3.5 h-3.5 text-warm-gray group-hover:text-gray-700 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
       </div>
     </div>
   )
