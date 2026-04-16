@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo, type ChangeEvent } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../../context/ToastContext'
@@ -8,12 +8,10 @@ import { PiToolboxFill } from 'react-icons/pi'
 import { FaCircleInfo } from 'react-icons/fa6'
 import { MdOutlineMenuBook } from 'react-icons/md'
 import { BsStars, BsListStars } from 'react-icons/bs'
-import { Field } from '../../components/LibraryItemForm'
 import { categoryLabel } from '../../constants/categories'
-import { CoverImageGallery } from '../../components/CoverImageGallery'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
 import { useDebouncedCallback } from '../../hooks/useDebouncedCallback'
-import { MAX_LIBRARY_PHOTOS } from '../../components/LibraryItemForm'
+import { InfoTab } from './InfoTab'
 import { MaterialsTab } from './MaterialsTab'
 import { RecipeTab } from './RecipeTab'
 import { KnitTab } from './KnitTab'
@@ -33,7 +31,6 @@ export default function ProjectDetail() {
   const [isPublic, setIsPublic] = useState(false)
   const projectId = parseInt(id!)
 
-
   const [textFields, setTextFields] = useState({ name: '', description: '', notes: '', tags: '', recipeText: '' })
   const [pinterestBoardUrls, setPinterestBoardUrls] = useState<string[]>([])
   const textRef = useRef(textFields)
@@ -41,8 +38,6 @@ export default function ProjectDetail() {
   const [craftDetails, setCraftDetails] = useState<Record<string, string>>({})
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
-  const coverImageRef = useRef<HTMLInputElement>(null)
-  const [coverState, setCoverState] = useState({ uploading: false, error: '' })
 
   function setTextField(field: keyof typeof textFields, value: string) {
     const next = { ...textRef.current, [field]: value }
@@ -64,7 +59,6 @@ export default function ProjectDetail() {
     }).finally(() => setLoading(false))
   }, [projectId])
 
-  // Sequence counter ensures a slow earlier save never overwrites a newer one
   const saveSeqRef = useRef(0)
   const autoSave = useDebouncedCallback(async (updates: object) => {
     const seq = ++saveSeqRef.current
@@ -94,22 +88,6 @@ export default function ProjectDetail() {
     }
     setTextField(field as keyof typeof textFields, value)
     autoSave({ ...textRef.current, [field]: value })
-  }
-
-  async function handleCoverImageUpload(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setCoverState({ uploading: true, error: '' })
-    try {
-      const updated = await projectsApi.uploadCoverImage(projectId, file)
-      setProject(updated)
-      showToast(t('cover_added_toast'))
-    } catch {
-      setCoverState(s => ({ ...s, error: t('upload_failed') }))
-    } finally {
-      setCoverState(s => ({ ...s, uploading: false }))
-      if (coverImageRef.current) coverImageRef.current.value = ''
-    }
   }
 
   async function handleDelete() {
@@ -183,42 +161,15 @@ export default function ProjectDetail() {
       </div>
 
       {tab === 'info' && (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <CoverImageGallery
-              items={(project.coverImages ?? []).map(img => ({ key: img.id, src: img.storedName, name: img.originalName, isMain: img.isMain }))}
-              max={MAX_LIBRARY_PHOTOS}
-              uploading={coverState.uploading}
-              onSetMain={async key => setProject(await projectsApi.setCoverImageMain(projectId, key as number))}
-              onRemove={key => confirmDelete(
-                t('delete_cover_image_confirm'),
-                async () => {
-                  setProject(await projectsApi.deleteCoverImage(projectId, key as number))
-                  showToast(t('cover_image_removed_toast'))
-                },
-              )}
-              onAdd={() => coverImageRef.current?.click()}
-            />
-            {coverState.error && <p className="text-xs text-red-500">{coverState.error}</p>}
-            <input ref={coverImageRef} type="file" accept="image/png,image/jpeg,image/jpg" onChange={handleCoverImageUpload} className="hidden" />
-          </div>
-
-          <Field label={t('field_name')}>
-            <input className="input" value={textFields.name} onChange={e => handleInfoChange('name', e.target.value)} />
-          </Field>
-          <Field label={t('field_description')}>
-            <textarea className="textarea" rows={4} value={textFields.description} onChange={e => handleInfoChange('description', e.target.value)} placeholder={t('describe_project')} />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label={t('start_date_label')}>
-              <input type="date" className="input" value={startDate} onChange={e => handleInfoChange('startDate', e.target.value)} />
-            </Field>
-            <Field label={t('end_date_label')}>
-              <input type="date" className="input" value={endDate} onChange={e => handleInfoChange('endDate', e.target.value)} />
-            </Field>
-          </div>
-          <p className="text-xs text-warm-gray text-right">{t('auto_saving')}</p>
-        </div>
+        <InfoTab
+          project={project}
+          projectId={projectId}
+          textFields={{ name: textFields.name, description: textFields.description }}
+          startDate={startDate}
+          endDate={endDate}
+          onInfoChange={handleInfoChange}
+          onUpdate={setProject}
+        />
       )}
 
       {tab === 'materials' && (
