@@ -2,11 +2,15 @@ import { useState, useRef, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { libraryApi } from '../api'
 import type { LibraryItem, LibraryItemType } from '../types'
-import { COLORS, COLOR_MAP, COLOR_MAP_BY_HEX, getColorName } from '../colors'
 import { typeLabel } from '../utils/libraryUtils'
 import { GiChopsticks, GiPirateHook, GiRolledCloth } from 'react-icons/gi'
 import { PiYarnFill } from 'react-icons/pi'
 import { LibraryItemTypeFields } from './LibraryItemTypeFields'
+import { Field } from './Field'
+import { ColorPicker } from './ColorPicker'
+
+export { Field } from './Field'
+export { ColorPicker } from './ColorPicker'
 
 export const ITEM_TYPES: LibraryItemType[] = ['YARN', 'FABRIC', 'KNITTING_NEEDLE', 'CROCHET_HOOK']
 export const COLOR_ITEM_TYPES: LibraryItemType[] = ['YARN', 'FABRIC']
@@ -19,83 +23,6 @@ export const TYPE_ICONS: Record<LibraryItemType, React.ReactNode> = {
   CROCHET_HOOK: <GiPirateHook className="text-sand-blue-deep" />,
 }
 
-export function Field({ label, children, className, required }: { label: string; children: React.ReactNode; className?: string; required?: boolean }) {
-  return (
-    <div className={className}>
-      <label className="block text-sm font-medium text-gray-700 mb-1.5">
-        {label}
-        {required && <span className="text-red-500 ml-0.5">*</span>}
-      </label>
-      {children}
-    </div>
-  )
-}
-
-export function ColorPicker({ selected, onChange }: {
-  selected: string[]
-  onChange: (colors: string[]) => void
-}) {
-  const { i18n } = useTranslation()
-
-  function toggle(name: string) {
-    if (selected.includes(name)) {
-      onChange(selected.filter(c => c !== name))
-    } else {
-      onChange([...selected, name])
-    }
-  }
-
-  return (
-    <div className="space-y-2">
-      {selected.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {selected.map(name => {
-            const colorEntry = COLOR_MAP_BY_HEX[COLOR_MAP[name]]
-            const displayName = colorEntry ? getColorName(colorEntry, i18n.language) : name
-            return (
-              <span
-                key={name}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-soft-brown/20 text-gray-700"
-              >
-                <span
-                  className="w-3 h-3 rounded-full border border-black/10 flex-shrink-0"
-                  style={{ backgroundColor: COLOR_MAP[name] ?? '#ccc' }}
-                />
-                {displayName}
-                <button
-                  type="button"
-                  onClick={() => toggle(name)}
-                  className="ml-0.5 text-warm-gray hover:text-red-400 leading-none"
-                >×</button>
-              </span>
-            )
-          })}
-        </div>
-      )}
-      <div className="flex flex-wrap gap-1.5">
-        {COLORS.map((color) => {
-          const { name, hex } = color
-          const isSelected = selected.includes(name)
-          return (
-            <button
-              key={name}
-              type="button"
-              title={getColorName(color, i18n.language)}
-              onClick={() => toggle(name)}
-              className={`w-7 h-7 rounded-full border-2 transition-all hover:scale-110 ${
-                isSelected
-                  ? 'border-sand-blue-deep ring-2 ring-sand-blue-deep/40 scale-110'
-                  : 'border-black/10 hover:border-black/25'
-              }`}
-              style={{ backgroundColor: hex }}
-            />
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
 export const MAX_LIBRARY_PHOTOS = 3
 export const LIBRARY_PHOTO_ACCEPT = 'image/png,image/jpeg,image/jpg'
 
@@ -106,7 +33,6 @@ interface LibraryItemFormProps {
   onTypeChange: (t: LibraryItemType) => void
   onCreated: (item: LibraryItem) => void
   onCancel: () => void
-  /** Hide image upload (e.g. in compact/inline contexts) */
   hideImageUpload?: boolean
 }
 
