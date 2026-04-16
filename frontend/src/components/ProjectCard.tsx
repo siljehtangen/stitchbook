@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react'
+import { FiEdit2 } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
 import type { Project } from '../types'
 import { projectCoverImageUrls } from '../projectOverviewMedia'
@@ -41,11 +42,18 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
             </div>
           )}
         </div>
-        {cover ? (
-          <img src={cover} alt={project.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" loading="lazy" />
-        ) : (
-          <span className="text-2xl flex-shrink-0">{CATEGORY_ICONS[project.category]}</span>
-        )}
+        <div className="relative flex-shrink-0">
+          {cover ? (
+            <img src={cover} alt={project.name} className="w-14 h-14 rounded-xl object-cover" loading="lazy" />
+          ) : (
+            <div className="w-14 h-14 rounded-xl bg-soft-brown/10 flex items-center justify-center">
+              <span className="text-2xl">{CATEGORY_ICONS[project.category]}</span>
+            </div>
+          )}
+          <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-white shadow-sm border border-soft-brown/20 flex items-center justify-center">
+            <FiEdit2 className="w-3 h-3 text-warm-gray" />
+          </div>
+        </div>
       </div>
       {progress !== null && (
         <div className="mt-3">
