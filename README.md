@@ -111,7 +111,7 @@ gradlew.bat test      # Windows
 
 Test reports are written to `backend/build/reports/tests/test/index.html`.
 
-Tests cover `FriendshipService`, `ProjectService`, and `LibraryService`.
+Tests cover `FriendshipService`, `ProjectService`, and `LibraryService` across 7 test files (~104 tests total).
 
 ---
 
