@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session)
       if (session) {
         // Sync user profile to backend so friend requests by email work
-        usersApi.syncMe().catch(() => {})
+        usersApi.syncMe().catch((e) => console.error('Profile sync failed:', e))
       }
     })
 
