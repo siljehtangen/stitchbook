@@ -155,7 +155,10 @@ export function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson
   const [rows, setRows] = useState(initRows)
   const [cols, setCols] = useState(initCols)
   const [cells, setCells] = useState<PatternCell[]>(() => {
-    try { return JSON.parse(cellDataJson) } catch { return [] }
+    try { return JSON.parse(cellDataJson) } catch (e) {
+      console.error('Failed to parse grid cell data:', e)
+      return []
+    }
   })
   const [selectedColor, setSelectedColor] = useState('#C6D8B8')
   const [selectedSymbol, setSelectedSymbol] = useState('O')
