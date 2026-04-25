@@ -3,7 +3,10 @@ import { supabase } from '../supabase'
 
 const STORAGE_BUCKET = 'stitchbud-files'
 
-export const api = axios.create({ baseURL: '/api', timeout: 15000 })
+export const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL ?? '/api',
+  timeout: 15000,
+})
 
 api.interceptors.request.use(async config => {
   try {
