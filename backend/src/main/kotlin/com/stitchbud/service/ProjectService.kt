@@ -32,6 +32,7 @@ class ProjectService(
     private val rowCounterRepository: RowCounterRepository,
     private val storageService: SupabaseStorageService,
     private val libraryService: LibraryService,
+    private val projectMapper: ProjectMapper,
     private val objectMapper: ObjectMapper,
     @Value("\${app.upload-dir:./uploads}") private val uploadDir: String
 ) {
@@ -51,13 +52,13 @@ class ProjectService(
         projectRepository.findByIdAndUserId(id, userId).orElseThrow { NotFoundException("Project not found") }
 
     fun getAllProjects(userId: String): List<ProjectDto> =
-        projectRepository.findByUserIdOrderByUpdatedAtDesc(userId).map { it.toDto() }
+        projectRepository.findByUserIdOrderByUpdatedAtDesc(userId).map { projectMapper.toDto(it) }
 
     fun getProjectsByCategory(category: ProjectCategory, userId: String): List<ProjectDto> =
-        projectRepository.findByUserIdAndCategory(userId, category).map { it.toDto() }
+        projectRepository.findByUserIdAndCategory(userId, category).map { projectMapper.toDto(it) }
 
     fun getProject(id: Long, userId: String): ProjectDto =
-        findProject(id, userId).toDto()
+        projectMapper.toDto(findProject(id, userId))
 
     fun createProject(req: CreateProjectRequest, userId: String): ProjectDto {
         val project = Project(userId = userId, name = req.name, description = req.description, category = req.category, tags = req.tags,
@@ -65,7 +66,7 @@ class ProjectService(
         val saved = projectRepository.save(project)
         saved.rowCounter = RowCounter(project = saved)
         saved.patternGrids.add(PatternGrid(project = saved))
-        return projectRepository.save(saved).toDto()
+        return projectMapper.toDto(projectRepository.save(saved))
     }
 
     fun updateProject(id: Long, req: UpdateProjectRequest, userId: String): ProjectDto {
@@ -85,7 +86,7 @@ class ProjectService(
         if (req.clearEndDate) project.endDate = null
         req.isPublic?.let { project.isPublic = it }
         project.updatedAt = System.currentTimeMillis()
-        return projectRepository.save(project).toDto()
+        return projectMapper.toDto(projectRepository.save(project))
     }
 
     private fun cleanupProjectStorage(project: Project) {
@@ -139,7 +140,7 @@ class ProjectService(
         )
         project.materials.add(material)
         project.updatedAt = System.currentTimeMillis()
-        return projectRepository.save(project).toDto()
+        return projectMapper.toDto(projectRepository.save(project))
     }
 
     fun deleteMaterial(projectId: Long, materialId: Long, userId: String): ProjectDto {
@@ -147,7 +148,7 @@ class ProjectService(
         project.materials.removeIf { it.id == materialId }
         project.images.removeIf { it.section == "material" && it.materialId == materialId }
         project.updatedAt = System.currentTimeMillis()
-        return projectRepository.save(project).toDto()
+        return projectMapper.toDto(projectRepository.save(project))
     }
 
     fun updateRowCounter(projectId: Long, req: UpdateRowCounterRequest, userId: String): ProjectDto {
@@ -165,14 +166,14 @@ class ProjectService(
             )
         }
         project.updatedAt = System.currentTimeMillis()
-        return projectRepository.save(project).toDto()
+        return projectMapper.toDto(projectRepository.save(project))
     }
 
     fun createPatternGrid(projectId: Long, userId: String): ProjectDto {
         val project = findProject(projectId, userId)
         project.patternGrids.add(PatternGrid(project = project))
         project.updatedAt = System.currentTimeMillis()
-        return projectRepository.save(project).toDto()
+        return projectMapper.toDto(projectRepository.save(project))
     }
 
     fun updatePatternGrid(projectId: Long, gridId: Long, req: UpdatePatternGridRequest, userId: String): ProjectDto {
@@ -184,87 +185,64 @@ class ProjectService(
         grid.cols = req.cols
         grid.cellData = req.cellData
         project.updatedAt = System.currentTimeMillis()
-        return projectRepository.save(project).toDto()
+        return projectMapper.toDto(projectRepository.save(project))
     }
 
     fun deletePatternGrid(projectId: Long, gridId: Long, userId: String): ProjectDto {
         val project = findProject(projectId, userId)
         project.patternGrids.removeIf { it.id == gridId }
         project.updatedAt = System.currentTimeMillis()
-        return projectRepository.save(project).toDto()
+        return projectMapper.toDto(projectRepository.save(project))
     }
 
-    fun registerCoverImage(projectId: Long, req: RegisterProjectImageRequest, userId: String): ProjectDto {
-        val project = findProject(projectId, userId)
-        val coverImages = project.images.filter { it.section == "cover" }
-        if (coverImages.size >= MAX_IMAGES) throw BadRequestException("Maximum $MAX_IMAGES cover images allowed")
-        val isFirst = coverImages.isEmpty()
-        val img = ProjectImage(storedName = req.fileUrl, originalName = req.originalName, section = "cover", materialId = null, isMain = isFirst, project = project)
-        project.images.add(img)
-        project.updatedAt = System.currentTimeMillis()
-        return projectRepository.save(project).toDto()
-    }
+    fun registerCoverImage(projectId: Long, req: RegisterProjectImageRequest, userId: String): ProjectDto =
+        doRegisterImage(findProject(projectId, userId), "cover", null, req.fileUrl, req.originalName)
 
-    fun setCoverImageMain(projectId: Long, imageId: Long, userId: String): ProjectDto {
-        val project = findProject(projectId, userId)
-        val target = project.images.find { it.id == imageId && it.section == "cover" } ?: throw NotFoundException("Image not found")
-        project.images.filter { it.section == "cover" }.forEach { it.isMain = false }
-        target.isMain = true
-        project.updatedAt = System.currentTimeMillis()
-        return projectRepository.save(project).toDto()
-    }
+    fun setCoverImageMain(projectId: Long, imageId: Long, userId: String): ProjectDto =
+        doSetImageMain(findProject(projectId, userId), "cover", imageId)
 
-    fun deleteCoverImage(projectId: Long, imageId: Long, userId: String): ProjectDto {
-        val project = findProject(projectId, userId)
-        val img = project.images.find { it.id == imageId && it.section == "cover" } ?: throw NotFoundException("Image not found")
-        val wasMain = img.isMain
-        try { storageService.deleteByUrl(img.storedName) }
-        catch (e: Exception) { logger.warn("Failed to delete cover image ${img.storedName}: ${e.message}") }
-        project.images.removeIf { it.id == imageId }
-        if (wasMain) {
-            val next = project.images.firstOrNull { it.section == "cover" }
-            next?.isMain = true
-        }
-        project.updatedAt = System.currentTimeMillis()
-        return projectRepository.save(project).toDto()
-    }
+    fun deleteCoverImage(projectId: Long, imageId: Long, userId: String): ProjectDto =
+        doDeleteImage(findProject(projectId, userId), "cover", imageId)
 
     fun registerMaterialImage(projectId: Long, req: RegisterProjectImageRequest, userId: String): ProjectDto {
-        val project = findProject(projectId, userId)
         val materialId = req.materialId ?: throw BadRequestException("materialId required")
+        val project = findProject(projectId, userId)
         project.materials.find { it.id == materialId } ?: throw NotFoundException("Material not found")
-        val matImages = project.images.filter { it.section == "material" && it.materialId == materialId }
-        if (matImages.size >= MAX_IMAGES) throw BadRequestException("Maximum $MAX_IMAGES images per material")
-        val isFirst = matImages.isEmpty()
-        val img = ProjectImage(storedName = req.fileUrl, originalName = req.originalName, section = "material", materialId = materialId, isMain = isFirst, project = project)
-        project.images.add(img)
-        project.updatedAt = System.currentTimeMillis()
-        return projectRepository.save(project).toDto()
+        return doRegisterImage(project, "material", materialId, req.fileUrl, req.originalName)
     }
 
-    fun setMaterialImageMain(projectId: Long, imageId: Long, userId: String): ProjectDto {
-        val project = findProject(projectId, userId)
-        val target = project.images.find { it.id == imageId && it.section == "material" } ?: throw NotFoundException("Image not found")
-        project.images.filter { it.section == "material" && it.materialId == target.materialId }.forEach { it.isMain = false }
+    fun setMaterialImageMain(projectId: Long, imageId: Long, userId: String): ProjectDto =
+        doSetImageMain(findProject(projectId, userId), "material", imageId)
+
+    fun deleteMaterialImage(projectId: Long, imageId: Long, userId: String): ProjectDto =
+        doDeleteImage(findProject(projectId, userId), "material", imageId)
+
+    private fun doRegisterImage(project: Project, section: String, materialId: Long?, fileUrl: String, originalName: String): ProjectDto {
+        val sectionImages = project.images.filter { it.section == section && (materialId == null || it.materialId == materialId) }
+        if (sectionImages.size >= MAX_IMAGES) throw BadRequestException("Maximum $MAX_IMAGES $section images allowed")
+        project.images.add(ProjectImage(storedName = fileUrl, originalName = originalName, section = section, materialId = materialId, isMain = sectionImages.isEmpty(), project = project))
+        project.updatedAt = System.currentTimeMillis()
+        return projectMapper.toDto(projectRepository.save(project))
+    }
+
+    private fun doSetImageMain(project: Project, section: String, imageId: Long): ProjectDto {
+        val target = project.images.find { it.id == imageId && it.section == section } ?: throw NotFoundException("Image not found")
+        project.images.filter { it.section == section && it.materialId == target.materialId }.forEach { it.isMain = false }
         target.isMain = true
         project.updatedAt = System.currentTimeMillis()
-        return projectRepository.save(project).toDto()
+        return projectMapper.toDto(projectRepository.save(project))
     }
 
-    fun deleteMaterialImage(projectId: Long, imageId: Long, userId: String): ProjectDto {
-        val project = findProject(projectId, userId)
-        val img = project.images.find { it.id == imageId && it.section == "material" } ?: throw NotFoundException("Image not found")
+    private fun doDeleteImage(project: Project, section: String, imageId: Long): ProjectDto {
+        val img = project.images.find { it.id == imageId && it.section == section } ?: throw NotFoundException("Image not found")
         val wasMain = img.isMain
         val materialId = img.materialId
         try { storageService.deleteByUrl(img.storedName) }
-        catch (e: Exception) { logger.warn("Failed to delete material image ${img.storedName}: ${e.message}") }
+        catch (e: Exception) { logger.warn("Failed to delete $section image ${img.storedName}: ${e.message}") }
         project.images.removeIf { it.id == imageId }
-        if (wasMain && materialId != null) {
-            val next = project.images.firstOrNull { it.section == "material" && it.materialId == materialId }
-            next?.isMain = true
-        }
+        if (wasMain) project.images.firstOrNull { it.section == section && it.materialId == materialId }?.isMain = true
         project.updatedAt = System.currentTimeMillis()
-        return projectRepository.save(project).toDto()
+        return projectMapper.toDto(projectRepository.save(project))
     }
 
     fun uploadCoverImage(projectId: Long, file: MultipartFile, userId: String): ProjectDto {
@@ -291,7 +269,7 @@ class ProjectService(
             )
         )
         project.updatedAt = System.currentTimeMillis()
-        return projectRepository.save(project).toDto()
+        return projectMapper.toDto(projectRepository.save(project))
     }
 
     fun uploadFile(projectId: Long, file: MultipartFile, userId: String): ProjectDto {
@@ -312,7 +290,7 @@ class ProjectService(
         )
         project.files.add(pf)
         project.updatedAt = System.currentTimeMillis()
-        return projectRepository.save(project).toDto()
+        return projectMapper.toDto(projectRepository.save(project))
     }
 
     fun registerFile(projectId: Long, req: RegisterProjectFileRequest, userId: String): ProjectDto {
@@ -327,7 +305,7 @@ class ProjectService(
         )
         project.files.add(pf)
         project.updatedAt = System.currentTimeMillis()
-        return projectRepository.save(project).toDto()
+        return projectMapper.toDto(projectRepository.save(project))
     }
 
     fun deleteFile(projectId: Long, fileId: Long, userId: String): ProjectDto {
@@ -336,7 +314,7 @@ class ProjectService(
         if (!pf.storedName.startsWith("http")) deleteFileFromDisk(projectId, pf.storedName)
         project.files.removeIf { it.id == fileId }
         project.updatedAt = System.currentTimeMillis()
-        return projectRepository.save(project).toDto()
+        return projectMapper.toDto(projectRepository.save(project))
     }
 
     fun getFilePath(projectId: Long, storedName: String): java.io.File =
@@ -354,33 +332,4 @@ class ProjectService(
         catch (e: Exception) { logger.warn("Failed to delete file $storedName for project $projectId: ${e.message}") }
     }
 
-    private fun Project.toDto(): ProjectDto {
-        fun toImgDto(it: ProjectImage) =
-            ProjectImageDto(it.id, it.storedName, it.originalName, it.section, it.materialId, it.isMain, id)
-        val coverRows = images.filter { it.section == "cover" }.sortedBy { it.id }
-        // Group material images once (O(M)) so the per-material lookup is O(1) instead of O(M) each
-        val materialImagesByMatId = images
-            .filter { it.section == "material" }
-            .groupBy { it.materialId }
-        return ProjectDto(
-            id = id, name = name, description = description, category = category,
-            tags = tags, notes = notes, recipeText = recipeText,
-            pinterestBoardUrls = runCatching { objectMapper.readValue<List<String>>(pinterestBoardUrls) }.getOrDefault(emptyList()),
-            craftDetails = craftDetails,
-            coverImages = coverRows.map(::toImgDto),
-            materials = materials.map { m ->
-                val matImages = (materialImagesByMatId[m.id] ?: emptyList()).sortedBy { it.id }
-                MaterialDto(m.id, m.name, m.type, m.itemType, m.color, m.colorHex, m.amount, m.unit,
-                    images = matImages.map(::toImgDto)
-                )
-            },
-            files = files.map { ProjectFileDto(it.id, it.originalName, it.storedName, it.mimeType, it.fileType, it.uploadedAt, id) },
-            rowCounter = rowCounter?.let { RowCounterDto(it.id, it.stitchesPerRound, it.totalRounds, it.checkedStitches) },
-            patternGrids = patternGrids.sortedBy { it.id }.map { PatternGridDto(it.id, it.rows, it.cols, it.cellData) },
-            startDate = startDate, endDate = endDate,
-            isPublic = isPublic,
-            createdAt = createdAt, updatedAt = updatedAt,
-            userId = userId
-        )
-    }
 }
