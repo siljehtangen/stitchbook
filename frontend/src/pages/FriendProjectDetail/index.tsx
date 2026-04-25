@@ -39,7 +39,7 @@ export default function FriendProjectDetail() {
 
   const craftDetails = useMemo<Record<string, string>>(() => {
     if (!project) return {}
-    try { return JSON.parse(project.craftDetails || '{}') } catch { return {} }
+    try { return JSON.parse(project.craftDetails || '{}') } catch (e) { console.error('Malformed craftDetails:', e); return {} }
   }, [project])
 
   const tabs = useMemo<{ id: Tab; label: string; icon: React.ReactNode }[]>(() => {
