@@ -79,6 +79,8 @@ function renderCard(
 describe('LibraryCard', () => {
   beforeEach(() => vi.clearAllMocks())
 
+  // ── view mode ──────────────────────────────────────────────────────────────
+
   it('renders item name', () => {
     renderCard()
     expect(screen.getByText('Merino Wool')).toBeInTheDocument()
@@ -95,7 +97,7 @@ describe('LibraryCard', () => {
     expect(screen.getByText('Blue')).toBeInTheDocument()
   })
 
-  it('shows camera placeholder when no image', () => {
+  it('shows camera placeholder when no image is set', () => {
     renderCard()
     expect(screen.getByText('📷')).toBeInTheDocument()
   })
@@ -107,20 +109,22 @@ describe('LibraryCard', () => {
     expect(onDelete).toHaveBeenCalledWith(1)
   })
 
-  it('switches to edit mode when edit button is clicked', async () => {
+  // ── edit mode ──────────────────────────────────────────────────────────────
+
+  it('switches to edit mode when the edit button is clicked', async () => {
     renderCard()
     await userEvent.click(screen.getByText('✎'))
     expect(screen.getByText('save')).toBeInTheDocument()
     expect(screen.getByText('cancel')).toBeInTheDocument()
   })
 
-  it('shows the current name in the edit input', async () => {
+  it('pre-fills the name input with the current item name', async () => {
     renderCard()
     await userEvent.click(screen.getByText('✎'))
     expect(screen.getByDisplayValue('Merino Wool')).toBeInTheDocument()
   })
 
-  it('exits edit mode when cancel is clicked', async () => {
+  it('exits edit mode when cancel is clicked without saving', async () => {
     renderCard()
     await userEvent.click(screen.getByText('✎'))
     await userEvent.click(screen.getByText('cancel'))
@@ -128,21 +132,12 @@ describe('LibraryCard', () => {
     expect(screen.getByText('✎')).toBeInTheDocument()
   })
 
-  it('calls libraryApi.update and onUpdated when save is clicked', async () => {
+  it('calls libraryApi.update with the current name and calls onUpdated', async () => {
     const updatedItem = { ...baseItem, name: 'Updated Name' }
     vi.mocked(libraryApi.update).mockResolvedValue(updatedItem)
-    const onUpdated = vi.fn()
+    const onUpdated = vi.fn() as (updated: LibraryItem) => void
 
-    render(
-      <LibraryCard
-        item={baseItem}
-        subtitle=""
-        onDelete={vi.fn()}
-        onImageUploaded={vi.fn()}
-        onUpdated={onUpdated}
-      />
-    )
-
+    renderCard({}, { onUpdated })
     await userEvent.click(screen.getByText('✎'))
     await userEvent.click(screen.getByText('save'))
 
@@ -153,13 +148,26 @@ describe('LibraryCard', () => {
     expect(onUpdated).toHaveBeenCalledWith(updatedItem)
   })
 
-  it('returns to view mode after a successful save', async () => {
-    vi.mocked(libraryApi.update).mockResolvedValue(baseItem)
+  it('saves the edited name to the API', async () => {
+    vi.mocked(libraryApi.update).mockResolvedValue({ ...baseItem, name: 'New Name' })
 
     renderCard()
     await userEvent.click(screen.getByText('✎'))
+    await userEvent.clear(screen.getByDisplayValue('Merino Wool'))
+    await userEvent.type(screen.getByRole('textbox'), 'New Name')
     await userEvent.click(screen.getByText('save'))
 
+    expect(libraryApi.update).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({ name: 'New Name' }),
+    )
+  })
+
+  it('returns to view mode after a successful save', async () => {
+    vi.mocked(libraryApi.update).mockResolvedValue(baseItem)
+    renderCard()
+    await userEvent.click(screen.getByText('✎'))
+    await userEvent.click(screen.getByText('save'))
     expect(screen.queryByText('save')).not.toBeInTheDocument()
     expect(screen.getByText('✎')).toBeInTheDocument()
   })
