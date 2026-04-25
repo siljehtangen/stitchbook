@@ -128,7 +128,9 @@ class FileController(private val projectService: ProjectService) {
         @PathVariable projectId: Long,
         @PathVariable storedName: String
     ): ResponseEntity<FileSystemResource> {
-        val file = projectService.getFilePath(projectId, storedName)
+        val userId = SecurityContextHolder.getContext().authentication.name
+        val file = projectService.getFilePath(projectId, storedName, userId)
+            ?: return ResponseEntity.notFound().build()
         if (!file.exists()) return ResponseEntity.notFound().build()
         val mimeType = try {
             java.nio.file.Files.probeContentType(file.toPath()) ?: "application/octet-stream"
