@@ -302,8 +302,10 @@ class ProjectService(
         return projectMapper.toDto(projectRepository.save(project))
     }
 
-    fun getFilePath(projectId: Long, storedName: String): java.io.File =
-        Paths.get(uploadDir, projectId.toString(), storedName).toFile()
+    fun getFilePath(projectId: Long, storedName: String, userId: String): java.io.File? {
+        projectRepository.findByIdAndUserId(projectId, userId).orElse(null) ?: return null
+        return Paths.get(uploadDir, projectId.toString(), storedName).toFile()
+    }
 
     private fun detectFileType(mimeType: String, ext: String): String = when {
         mimeType.startsWith("image/") -> "image"
