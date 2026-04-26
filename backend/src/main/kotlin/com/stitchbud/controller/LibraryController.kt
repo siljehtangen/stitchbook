@@ -5,8 +5,6 @@ import com.stitchbud.dto.RegisterLibraryImageRequest
 import com.stitchbud.dto.UpdateLibraryItemRequest
 import com.stitchbud.service.LibraryService
 import org.springframework.core.io.FileSystemResource
-import org.springframework.http.HttpHeaders
-import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
@@ -52,12 +50,6 @@ class LibraryImageController(private val libraryService: LibraryService) {
     fun serveImage(@PathVariable storedName: String): ResponseEntity<FileSystemResource> {
         val file = libraryService.getImageFile(storedName)
         if (!file.exists()) return ResponseEntity.notFound().build()
-        val mimeType = try {
-            java.nio.file.Files.probeContentType(file.toPath()) ?: "application/octet-stream"
-        } catch (_: Exception) { "application/octet-stream" }
-        return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"${file.name}\"")
-            .contentType(MediaType.parseMediaType(mimeType))
-            .body(FileSystemResource(file))
+        return serveFileResponse(file)
     }
 }

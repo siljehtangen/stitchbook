@@ -4,8 +4,6 @@ import com.stitchbud.dto.*
 import com.stitchbud.model.ProjectCategory
 import com.stitchbud.service.ProjectService
 import org.springframework.core.io.FileSystemResource
-import org.springframework.http.HttpHeaders
-import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
@@ -124,12 +122,6 @@ class FileController(private val projectService: ProjectService) {
         val file = projectService.getFilePath(projectId, storedName, userId)
             ?: return ResponseEntity.notFound().build()
         if (!file.exists()) return ResponseEntity.notFound().build()
-        val mimeType = try {
-            java.nio.file.Files.probeContentType(file.toPath()) ?: "application/octet-stream"
-        } catch (_: Exception) { "application/octet-stream" }
-        return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"${file.name}\"")
-            .contentType(MediaType.parseMediaType(mimeType))
-            .body(FileSystemResource(file))
+        return serveFileResponse(file)
     }
 }
