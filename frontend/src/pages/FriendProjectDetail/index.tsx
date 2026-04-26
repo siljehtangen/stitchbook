@@ -4,11 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { friendsApi, fileUrl } from '../../api'
 import { parseCraftDetails } from '../../utils/projectUtils'
 import type { Project } from '../../types'
-import { PiToolboxFill } from 'react-icons/pi'
-import { FaCircleInfo } from 'react-icons/fa6'
-import { MdOutlineMenuBook } from 'react-icons/md'
-import { BsStars, BsListStars } from 'react-icons/bs'
 import { categoryLabel } from '../../constants/categories'
+import { useProjectTabs, type ProjectTab } from '../../hooks/useProjectTabs'
+import { ProjectTabBar } from '../../components/ProjectTabBar'
 import { projectCoverImageUrls, materialImageUrls } from '../../projectOverviewMedia'
 import { OverviewTab } from '../ProjectDetail/OverviewTab'
 import { PinterestBoardEmbed } from '../ProjectDetail/RecipeTab'
@@ -16,8 +14,6 @@ import { PatternGridReadOnly } from '../ProjectDetail/PatternGridReadOnly'
 import { fileTypeIcon } from '../../utils/libraryUtils'
 import { FilePreviewModal } from '../ProjectDetail/FilePreviewModal'
 import type { ProjectFile } from '../../types'
-
-type Tab = 'info' | 'materials' | 'recipe' | 'knit' | 'overview'
 
 export default function FriendProjectDetail() {
   const { friendUserId, projectId } = useParams<{ friendUserId: string; projectId: string }>()
@@ -27,13 +23,14 @@ export default function FriendProjectDetail() {
   const friendName: string | undefined = (location.state as { friendName?: string } | null)?.friendName
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<Tab>('info')
+  const [tab, setTab] = useState<ProjectTab>('info')
   const [previewFile, setPreviewFile] = useState<ProjectFile | null>(null)
 
   const pid = parseInt(projectId!)
 
   useEffect(() => {
-    friendsApi.getFriendProject(friendUserId!, pid)
+    friendsApi
+      .getFriendProject(friendUserId!, pid)
       .then(setProject)
       .finally(() => setLoading(false))
   }, [friendUserId, pid])
@@ -43,17 +40,7 @@ export default function FriendProjectDetail() {
     return parseCraftDetails(project.craftDetails)
   }, [project])
 
-  const tabs = useMemo<{ id: Tab; label: string; icon: React.ReactNode }[]>(() => {
-    if (!project) return []
-    const sewing = project.category === 'SEWING'
-    return [
-      { id: 'info', label: t('tab_info'), icon: <FaCircleInfo /> },
-      { id: 'materials', label: t('tab_materials'), icon: <PiToolboxFill /> },
-      { id: 'recipe', label: t('tab_recipe'), icon: <MdOutlineMenuBook /> },
-      ...(!sewing ? [{ id: 'knit' as Tab, label: project.category === 'KNITTING' ? t('tab_knit') : t('tab_crochet'), icon: <BsStars /> }] : []),
-      { id: 'overview', label: t('tab_overview'), icon: <BsListStars /> },
-    ]
-  }, [t, project])
+  const tabs = useProjectTabs(project)
 
   if (loading) return <div className="text-center py-20 text-warm-gray">{t('loading')}</div>
   if (!project) return <div className="text-center py-20 text-warm-gray">{t('project_not_found')}</div>
@@ -66,31 +53,22 @@ export default function FriendProjectDetail() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="btn-ghost py-1.5 px-2" aria-label={t('go_back')}>←</button>
+        <button onClick={() => navigate(-1)} className="btn-ghost py-1.5 px-2" aria-label={t('go_back')}>
+          ←
+        </button>
         <div className="flex-1 min-w-0">
           <h2 className="text-lg font-semibold text-gray-800 truncate">{project.name}</h2>
           <span className="text-xs text-warm-gray">{categoryLabel(project.category, t)}</span>
         </div>
         <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
           {ownerLabel && <span className="text-xs text-warm-gray truncate max-w-[120px]">{ownerLabel}</span>}
-          <span className="text-xs text-warm-gray bg-soft-brown/20 px-2 py-0.5 rounded-lg">{t('friend_project_readonly')}</span>
+          <span className="text-xs text-warm-gray bg-soft-brown/20 px-2 py-0.5 rounded-lg">
+            {t('friend_project_readonly')}
+          </span>
         </div>
       </div>
 
-      <div className="flex gap-1 bg-sand-blue/20 p-1 rounded-xl">
-        {tabs.map(t_ => (
-          <button
-            key={t_.id}
-            onClick={() => setTab(t_.id)}
-            className={`flex-1 flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-lg text-xs font-medium transition-colors ${
-              tab === t_.id ? 'bg-white shadow-sm text-gray-800' : 'text-warm-gray hover:text-gray-700'
-            }`}
-          >
-            <span>{t_.icon}</span>
-            <span>{t_.label}</span>
-          </button>
-        ))}
-      </div>
+      <ProjectTabBar tabs={tabs} activeTab={tab} onSelect={setTab} />
 
       {tab === 'info' && (
         <div className="space-y-4">
@@ -185,7 +163,12 @@ export default function FriendProjectDetail() {
                   const url = fileUrl(pid, f.storedName)
                   return f.fileType === 'image' ? (
                     <button key={f.id} onClick={() => setPreviewFile(f)} className="focus:outline-none">
-                      <img src={url} alt={f.originalName} className="w-20 h-20 object-cover rounded-xl shadow-sm" loading="lazy" />
+                      <img
+                        src={url}
+                        alt={f.originalName}
+                        className="w-20 h-20 object-cover rounded-xl shadow-sm"
+                        loading="lazy"
+                      />
                     </button>
                   ) : (
                     <button
@@ -218,7 +201,9 @@ export default function FriendProjectDetail() {
                     try {
                       const checked = JSON.parse(project.rowCounter.checkedStitches) as number[]
                       return Math.floor(checked.length / project.rowCounter.stitchesPerRound)
-                    } catch { return 0 }
+                    } catch {
+                      return 0
+                    }
                   })(),
                   total: project.rowCounter.totalRounds,
                 })}
@@ -231,7 +216,9 @@ export default function FriendProjectDetail() {
               {project.patternGrids.map((grid, i) => (
                 <div key={grid.id}>
                   {project.patternGrids.length > 1 && (
-                    <p className="text-xs text-warm-gray mb-1">{i + 1}/{project.patternGrids.length}</p>
+                    <p className="text-xs text-warm-gray mb-1">
+                      {i + 1}/{project.patternGrids.length}
+                    </p>
                   )}
                   <PatternGridReadOnly
                     rows={grid.rows}
@@ -243,9 +230,10 @@ export default function FriendProjectDetail() {
               ))}
             </div>
           )}
-          {(!project.rowCounter || project.rowCounter.totalRounds === 0) && (project.patternGrids ?? []).length === 0 && (
-            <p className="text-sm text-warm-gray">{t('no_knit_content_yet')}</p>
-          )}
+          {(!project.rowCounter || project.rowCounter.totalRounds === 0) &&
+            (project.patternGrids ?? []).length === 0 && (
+              <p className="text-sm text-warm-gray">{t('no_knit_content_yet')}</p>
+            )}
         </div>
       )}
 
@@ -261,9 +249,7 @@ export default function FriendProjectDetail() {
         />
       )}
 
-      {previewFile && (
-        <FilePreviewModal file={previewFile} projectId={pid} onClose={() => setPreviewFile(null)} />
-      )}
+      {previewFile && <FilePreviewModal file={previewFile} projectId={pid} onClose={() => setPreviewFile(null)} />}
     </div>
   )
 }

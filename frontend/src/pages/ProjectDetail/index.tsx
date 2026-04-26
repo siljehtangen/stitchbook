@@ -1,14 +1,12 @@
-import { useEffect, useState, useRef, useMemo } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../../context/ToastContext'
 import { projectsApi } from '../../api'
 import type { Project, ProjectCategory } from '../../types'
-import { PiToolboxFill } from 'react-icons/pi'
-import { FaCircleInfo } from 'react-icons/fa6'
-import { MdOutlineMenuBook } from 'react-icons/md'
-import { BsStars, BsListStars } from 'react-icons/bs'
 import { HiLockClosed, HiGlobeAlt } from 'react-icons/hi2'
+import { useProjectTabs, type ProjectTab } from '../../hooks/useProjectTabs'
+import { ProjectTabBar } from '../../components/ProjectTabBar'
 import { categoryLabel } from '../../constants/categories'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
 import { useConfirmDialog } from '../../context/ConfirmDialogContext'
@@ -20,8 +18,6 @@ import { RecipeTab } from './RecipeTab'
 import { KnitTab } from './KnitTab'
 import { OverviewTab } from './OverviewTab'
 
-type Tab = 'info' | 'materials' | 'recipe' | 'knit' | 'overview'
-
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -31,7 +27,7 @@ export default function ProjectDetail() {
   const { confirm } = useConfirmDialog()
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<Tab>('info')
+  const [tab, setTab] = useState<ProjectTab>('info')
   const [isPublic, setIsPublic] = useState(false)
   const projectId = parseInt(id!)
 
@@ -112,25 +108,7 @@ export default function ProjectDetail() {
     })
   }
 
-  const tabs = useMemo<{ id: Tab; label: string; icon: React.ReactNode }[]>(() => {
-    if (!project) return []
-    const sewing = project.category === 'SEWING'
-    return [
-      { id: 'info', label: t('tab_info'), icon: <FaCircleInfo /> },
-      { id: 'materials', label: t('tab_materials'), icon: <PiToolboxFill /> },
-      { id: 'recipe', label: t('tab_recipe'), icon: <MdOutlineMenuBook /> },
-      ...(!sewing
-        ? [
-            {
-              id: 'knit' as Tab,
-              label: project.category === 'KNITTING' ? t('tab_knit') : t('tab_crochet'),
-              icon: <BsStars />,
-            },
-          ]
-        : []),
-      { id: 'overview', label: t('tab_overview'), icon: <BsListStars /> },
-    ]
-  }, [t, project])
+  const tabs = useProjectTabs(project)
 
   if (loading) return <div className="text-center py-20 text-warm-gray">{t('loading')}</div>
   if (!project) return <div className="text-center py-20 text-warm-gray">{t('project_not_found')}</div>
@@ -175,20 +153,7 @@ export default function ProjectDetail() {
         </button>
       </div>
 
-      <div className="flex gap-1 bg-sand-blue/20 p-1 rounded-xl">
-        {tabs.map(t_ => (
-          <button
-            key={t_.id}
-            onClick={() => setTab(t_.id)}
-            className={`flex-1 flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-lg text-xs font-medium transition-colors ${
-              tab === t_.id ? 'bg-white shadow-sm text-gray-800' : 'text-warm-gray hover:text-gray-700'
-            }`}
-          >
-            <span>{t_.icon}</span>
-            <span>{t_.label}</span>
-          </button>
-        ))}
-      </div>
+      <ProjectTabBar tabs={tabs} activeTab={tab} onSelect={setTab} />
 
       {tab === 'info' && (
         <InfoTab
