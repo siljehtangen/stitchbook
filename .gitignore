@@ -6,9 +6,11 @@ node_modules/
 # Frontend build output
 frontend/dist/
 frontend/build/
+frontend/coverage/
 
 # Backend build output
 backend/build/
+backend/bin/
 backend/target/
 backend/.gradle/
 backend/out/
