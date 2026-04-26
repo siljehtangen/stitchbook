@@ -20,7 +20,7 @@ backend/out/
 
 # Gradle
 .gradle/
-gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.jar
 
 # Rust
 backend/Cargo.lock
