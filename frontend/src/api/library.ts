@@ -3,6 +3,8 @@ import { api, uploadFile } from './client'
 import { libraryItemSchema, safeParsed } from './schemas'
 import { z } from 'zod'
 
+const libRes = (data: unknown) => safeParsed(libraryItemSchema, data, 'LibraryItem')
+
 export const libraryApi = {
   getAll: async (): Promise<LibraryItem[]> => {
     const r = await api.get<LibraryItem[]>('/library')
@@ -24,7 +26,7 @@ export const libraryApi = {
     hookSizeMm?: string
   }): Promise<LibraryItem> => {
     const r = await api.post<LibraryItem>('/library', data)
-    return safeParsed(libraryItemSchema, r.data, 'LibraryItem')
+    return libRes(r.data)
   },
 
   registerLibraryImage: async (id: number, file: File): Promise<LibraryItem> => {
@@ -33,17 +35,17 @@ export const libraryApi = {
       originalName: file.name,
       fileUrl: publicUrl,
     })
-    return safeParsed(libraryItemSchema, r.data, 'LibraryItem')
+    return libRes(r.data)
   },
 
   setLibraryImageMain: async (libraryItemId: number, imageId: number): Promise<LibraryItem> => {
     const r = await api.put<LibraryItem>(`/library/${libraryItemId}/images/${imageId}/main`)
-    return safeParsed(libraryItemSchema, r.data, 'LibraryItem')
+    return libRes(r.data)
   },
 
   deleteLibraryImage: async (libraryItemId: number, imageId: number): Promise<LibraryItem> => {
     const r = await api.delete<LibraryItem>(`/library/${libraryItemId}/images/${imageId}`)
-    return safeParsed(libraryItemSchema, r.data, 'LibraryItem')
+    return libRes(r.data)
   },
 
   update: async (
@@ -63,7 +65,7 @@ export const libraryApi = {
     }
   ): Promise<LibraryItem> => {
     const r = await api.put<LibraryItem>(`/library/${id}`, data)
-    return safeParsed(libraryItemSchema, r.data, 'LibraryItem')
+    return libRes(r.data)
   },
 
   delete: (id: number) => api.delete(`/library/${id}`),
