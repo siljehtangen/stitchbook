@@ -41,6 +41,11 @@ class ProjectService(
     private fun findProject(id: Long, userId: String): Project =
         projectRepository.findByIdAndUserId(id, userId).orElseThrow { NotFoundException("Project not found") }
 
+    private fun touchAndSave(project: Project): ProjectDto {
+        project.updatedAt = System.currentTimeMillis()
+        return projectMapper.toDto(projectRepository.save(project))
+    }
+
     fun getAllProjects(userId: String): List<ProjectDto> =
         projectRepository.findByUserIdOrderByUpdatedAtDesc(userId).map { projectMapper.toDto(it) }
 
@@ -75,8 +80,7 @@ class ProjectService(
         req.endDate?.let { project.endDate = it }
         if (req.clearEndDate) project.endDate = null
         req.isPublic?.let { project.isPublic = it }
-        project.updatedAt = System.currentTimeMillis()
-        return projectMapper.toDto(projectRepository.save(project))
+        return touchAndSave(project)
     }
 
     private fun cleanupProjectStorage(project: Project) {
@@ -129,16 +133,14 @@ class ProjectService(
             project = project
         )
         project.materials.add(material)
-        project.updatedAt = System.currentTimeMillis()
-        return projectMapper.toDto(projectRepository.save(project))
+        return touchAndSave(project)
     }
 
     fun deleteMaterial(projectId: Long, materialId: Long, userId: String): ProjectDto {
         val project = findProject(projectId, userId)
         project.materials.removeIf { it.id == materialId }
         project.images.removeIf { it.section == "material" && it.materialId == materialId }
-        project.updatedAt = System.currentTimeMillis()
-        return projectMapper.toDto(projectRepository.save(project))
+        return touchAndSave(project)
     }
 
     fun updateRowCounter(projectId: Long, req: UpdateRowCounterRequest, userId: String): ProjectDto {
@@ -155,15 +157,13 @@ class ProjectService(
                 project = project
             )
         }
-        project.updatedAt = System.currentTimeMillis()
-        return projectMapper.toDto(projectRepository.save(project))
+        return touchAndSave(project)
     }
 
     fun createPatternGrid(projectId: Long, userId: String): ProjectDto {
         val project = findProject(projectId, userId)
         project.patternGrids.add(PatternGrid(project = project))
-        project.updatedAt = System.currentTimeMillis()
-        return projectMapper.toDto(projectRepository.save(project))
+        return touchAndSave(project)
     }
 
     fun updatePatternGrid(projectId: Long, gridId: Long, req: UpdatePatternGridRequest, userId: String): ProjectDto {
@@ -174,15 +174,13 @@ class ProjectService(
         grid.rows = req.rows
         grid.cols = req.cols
         grid.cellData = req.cellData
-        project.updatedAt = System.currentTimeMillis()
-        return projectMapper.toDto(projectRepository.save(project))
+        return touchAndSave(project)
     }
 
     fun deletePatternGrid(projectId: Long, gridId: Long, userId: String): ProjectDto {
         val project = findProject(projectId, userId)
         project.patternGrids.removeIf { it.id == gridId }
-        project.updatedAt = System.currentTimeMillis()
-        return projectMapper.toDto(projectRepository.save(project))
+        return touchAndSave(project)
     }
 
     fun registerCoverImage(projectId: Long, req: RegisterProjectImageRequest, userId: String): ProjectDto =
@@ -211,16 +209,14 @@ class ProjectService(
         val sectionImages = project.images.filter { it.section == section && (materialId == null || it.materialId == materialId) }
         if (sectionImages.size >= MAX_IMAGES) throw BadRequestException("Maximum $MAX_IMAGES $section images allowed")
         project.images.add(ProjectImage(storedName = fileUrl, originalName = originalName, section = section, materialId = materialId, isMain = sectionImages.isEmpty(), project = project))
-        project.updatedAt = System.currentTimeMillis()
-        return projectMapper.toDto(projectRepository.save(project))
+        return touchAndSave(project)
     }
 
     private fun doSetImageMain(project: Project, section: String, imageId: Long): ProjectDto {
         val target = project.images.find { it.id == imageId && it.section == section } ?: throw NotFoundException("Image not found")
         project.images.filter { it.section == section && it.materialId == target.materialId }.forEach { it.isMain = false }
         target.isMain = true
-        project.updatedAt = System.currentTimeMillis()
-        return projectMapper.toDto(projectRepository.save(project))
+        return touchAndSave(project)
     }
 
     private fun doDeleteImage(project: Project, section: String, imageId: Long): ProjectDto {
@@ -231,8 +227,7 @@ class ProjectService(
         catch (e: Exception) { logger.warn("Failed to delete $section image ${img.storedName}: ${e.message}") }
         project.images.removeIf { it.id == imageId }
         if (wasMain) project.images.firstOrNull { it.section == section && it.materialId == materialId }?.isMain = true
-        project.updatedAt = System.currentTimeMillis()
-        return projectMapper.toDto(projectRepository.save(project))
+        return touchAndSave(project)
     }
 
     fun registerFile(projectId: Long, req: RegisterProjectFileRequest, userId: String): ProjectDto {
@@ -246,8 +241,7 @@ class ProjectService(
             project = project
         )
         project.files.add(pf)
-        project.updatedAt = System.currentTimeMillis()
-        return projectMapper.toDto(projectRepository.save(project))
+        return touchAndSave(project)
     }
 
     fun deleteFile(projectId: Long, fileId: Long, userId: String): ProjectDto {
@@ -255,8 +249,7 @@ class ProjectService(
         val pf = project.files.find { it.id == fileId } ?: throw NotFoundException("File not found")
         if (!pf.storedName.startsWith("http")) deleteFileFromDisk(projectId, pf.storedName)
         project.files.removeIf { it.id == fileId }
-        project.updatedAt = System.currentTimeMillis()
-        return projectMapper.toDto(projectRepository.save(project))
+        return touchAndSave(project)
     }
 
     fun getFilePath(projectId: Long, storedName: String, userId: String): java.io.File? {
