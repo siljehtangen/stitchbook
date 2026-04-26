@@ -4,8 +4,14 @@ import { fileUrl } from '../../api'
 import type { ProjectFile } from '../../types'
 import { fileTypeIcon } from '../../utils/libraryUtils'
 
-export function FilePreviewModal({ file, projectId, onClose }: {
-  file: ProjectFile; projectId: number; onClose: () => void
+export function FilePreviewModal({
+  file,
+  projectId,
+  onClose,
+}: {
+  file: ProjectFile
+  projectId: number
+  onClose: () => void
 }) {
   const { t } = useTranslation()
   const [zoom, setZoom] = useState(1)
@@ -13,25 +19,36 @@ export function FilePreviewModal({ file, projectId, onClose }: {
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={file.originalName}
       className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center p-4"
-      onClick={onClose}
     >
-      <div
-        className="relative flex flex-col items-center gap-3 w-full max-w-4xl"
-        onClick={e => e.stopPropagation()}
-      >
+      <button
+        type="button"
+        aria-label={t('close')}
+        className="absolute inset-0 w-full h-full cursor-default"
+        onClick={onClose}
+        tabIndex={-1}
+      />
+      <div className="relative z-10 flex flex-col items-center gap-3 w-full max-w-4xl">
         <div className="flex items-center justify-between w-full">
           <span className="text-white text-sm font-medium truncate max-w-xs">{file.originalName}</span>
           <button
             onClick={onClose}
             className="text-white/70 hover:text-white text-2xl leading-none ml-4 flex-shrink-0"
             title={t('close')}
-          >×</button>
+          >
+            ×
+          </button>
         </div>
 
         {file.fileType === 'image' ? (
           <>
-            <div className="overflow-auto rounded-lg w-full flex items-center justify-center" style={{ maxHeight: '75vh' }}>
+            <div
+              className="overflow-auto rounded-lg w-full flex items-center justify-center"
+              style={{ maxHeight: '75vh' }}
+            >
               <img
                 src={url}
                 alt={file.originalName}
@@ -50,17 +67,23 @@ export function FilePreviewModal({ file, projectId, onClose }: {
                 onClick={() => setZoom(z => Math.max(0.25, parseFloat((z - 0.25).toFixed(2))))}
                 className="text-white text-lg w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-full"
                 title={t('zoom_out')}
-              >−</button>
+              >
+                −
+              </button>
               <button
                 onClick={() => setZoom(1)}
                 className="text-white text-xs px-2 hover:bg-white/10 rounded-full h-8 min-w-[3rem]"
                 title={t('zoom_reset')}
-              >{Math.round(zoom * 100)}%</button>
+              >
+                {Math.round(zoom * 100)}%
+              </button>
               <button
                 onClick={() => setZoom(z => Math.min(4, parseFloat((z + 0.25).toFixed(2))))}
                 className="text-white text-lg w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-full"
                 title={t('zoom_in')}
-              >+</button>
+              >
+                +
+              </button>
             </div>
           </>
         ) : file.fileType === 'pdf' ? (

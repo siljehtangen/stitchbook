@@ -22,7 +22,7 @@ export function PinterestBoardEmbed({ url }: { url: string }) {
       document.body.appendChild(script)
     }
     const timer = setTimeout(() => {
-      (window as { PinUtils?: { build: () => void } }).PinUtils?.build()
+      ;(window as { PinUtils?: { build: () => void } }).PinUtils?.build()
     }, 300)
     return () => clearTimeout(timer)
   }, [url])
@@ -37,16 +37,31 @@ export function PinterestBoardEmbed({ url }: { url: string }) {
         data-pin-scale-height="240"
         data-pin-scale-width="80"
         href={url}
-      />
+      >
+        <span className="sr-only">Pinterest board</span>
+      </a>
     </div>
   )
 }
 
 const MAX_PINTEREST_BOARDS = 3
 
-export function RecipeTab({ recipeText, pinterestBoardUrls, files, projectId, onUpdate, onRecipeChange, onPinterestChange }: {
-  recipeText: string; pinterestBoardUrls: string[]; files: ProjectFile[]; projectId: number
-  onUpdate: (p: Project) => void; onRecipeChange: (v: string) => void; onPinterestChange: (urls: string[]) => void
+export function RecipeTab({
+  recipeText,
+  pinterestBoardUrls,
+  files,
+  projectId,
+  onUpdate,
+  onRecipeChange,
+  onPinterestChange,
+}: {
+  recipeText: string
+  pinterestBoardUrls: string[]
+  files: ProjectFile[]
+  projectId: number
+  onUpdate: (p: Project) => void
+  onRecipeChange: (v: string) => void
+  onPinterestChange: (urls: string[]) => void
 }) {
   const { t } = useTranslation()
   const confirmDelete = useConfirmDelete()
@@ -68,7 +83,7 @@ export function RecipeTab({ recipeText, pinterestBoardUrls, files, projectId, on
       () => projectsApi.replaceFile(projectId, replacingId, file),
       onUpdate,
       replaceRef,
-      () => setReplacingId(null),
+      () => setReplacingId(null)
     )
   }
 
@@ -127,7 +142,9 @@ export function RecipeTab({ recipeText, pinterestBoardUrls, files, projectId, on
                     onClick={() => onPinterestChange(pinterestBoardUrls.filter((_, j) => j !== i))}
                     className="text-warm-gray hover:text-red-400 text-xl px-1 leading-none flex-shrink-0"
                     title={t('delete')}
-                  >×</button>
+                  >
+                    ×
+                  </button>
                 </div>
                 {url && (
                   <div>
@@ -151,8 +168,20 @@ export function RecipeTab({ recipeText, pinterestBoardUrls, files, projectId, on
           >
             {uploading ? t('uploading') : t('upload_file')}
           </button>
-          <input ref={fileRef} type="file" accept="image/*,.pdf,.doc,.docx" onChange={handleFileUpload} className="hidden" />
-          <input ref={replaceRef} type="file" accept="image/*,.pdf,.doc,.docx" onChange={handleReplace} className="hidden" />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*,.pdf,.doc,.docx"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          <input
+            ref={replaceRef}
+            type="file"
+            accept="image/*,.pdf,.doc,.docx"
+            onChange={handleReplace}
+            className="hidden"
+          />
         </div>
 
         {files.length === 0 ? (
@@ -171,9 +200,16 @@ export function RecipeTab({ recipeText, pinterestBoardUrls, files, projectId, on
                     title={t('preview_file')}
                   >
                     {f.fileType === 'image' ? (
-                      <img src={url} alt={f.originalName} className="w-12 h-12 object-cover rounded-lg hover:opacity-80 transition-opacity" loading="lazy" />
+                      <img
+                        src={url}
+                        alt={f.originalName}
+                        className="w-12 h-12 object-cover rounded-lg hover:opacity-80 transition-opacity"
+                        loading="lazy"
+                      />
                     ) : (
-                      <span className="w-12 h-12 flex items-center justify-center text-2xl hover:opacity-70 transition-opacity">{fileTypeIcon(f.fileType)}</span>
+                      <span className="w-12 h-12 flex items-center justify-center text-2xl hover:opacity-70 transition-opacity">
+                        {fileTypeIcon(f.fileType)}
+                      </span>
                     )}
                   </button>
                   <div className="flex-1 min-w-0">
@@ -190,18 +226,24 @@ export function RecipeTab({ recipeText, pinterestBoardUrls, files, projectId, on
                     disabled={uploading}
                     className="text-warm-gray hover:text-sand-blue-deep text-sm px-1 flex-shrink-0"
                     title={t('replace_file')}
-                  >↺</button>
+                  >
+                    ↺
+                  </button>
                   <button
-                    onClick={() => confirmDelete(
-                      t('delete_attachment_confirm', { name: f.originalName }),
-                      async () => {
-                        onUpdate(await projectsApi.deleteFile(projectId, f.id))
-                      },
-                      'attachment_removed_toast',
-                    )}
+                    onClick={() =>
+                      confirmDelete(
+                        t('delete_attachment_confirm', { name: f.originalName }),
+                        async () => {
+                          onUpdate(await projectsApi.deleteFile(projectId, f.id))
+                        },
+                        'attachment_removed_toast'
+                      )
+                    }
                     className="text-warm-gray hover:text-red-400 text-xl px-1 leading-none flex-shrink-0"
                     title={t('delete')}
-                  >×</button>
+                  >
+                    ×
+                  </button>
                 </div>
               )
             })}
@@ -210,11 +252,7 @@ export function RecipeTab({ recipeText, pinterestBoardUrls, files, projectId, on
       </div>
 
       {previewFile && (
-        <FilePreviewModal
-          file={previewFile}
-          projectId={projectId}
-          onClose={() => setPreviewFile(null)}
-        />
+        <FilePreviewModal file={previewFile} projectId={projectId} onClose={() => setPreviewFile(null)} />
       )}
     </div>
   )
