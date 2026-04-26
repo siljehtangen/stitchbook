@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useToast } from '../context/ToastContext'
 import { friendsApi } from '../api'
 import type { Friend, FriendRequest } from '../types'
+import { UserAvatar } from '../components/UserAvatar'
 
 export default function FriendsPage() {
   const { t } = useTranslation()
@@ -18,7 +19,10 @@ export default function FriendsPage() {
 
   useEffect(() => {
     Promise.all([friendsApi.getFriends(), friendsApi.getPendingRequests()])
-      .then(([f, r]) => { setFriends(f); setRequests(r) })
+      .then(([f, r]) => {
+        setFriends(f)
+        setRequests(r)
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -32,7 +36,8 @@ export default function FriendsPage() {
       setEmailInput('')
       // Refresh lists
       const [f, r] = await Promise.all([friendsApi.getFriends(), friendsApi.getPendingRequests()])
-      setFriends(f); setRequests(r)
+      setFriends(f)
+      setRequests(r)
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
       setSendError(msg || t('friend_request_failed'))
@@ -88,7 +93,10 @@ export default function FriendsPage() {
             type="email"
             placeholder={t('friends_email_placeholder')}
             value={emailInput}
-            onChange={e => { setEmailInput(e.target.value); setSendError('') }}
+            onChange={e => {
+              setEmailInput(e.target.value)
+              setSendError('')
+            }}
             onKeyDown={e => e.key === 'Enter' && handleSendRequest()}
           />
           <button
@@ -105,12 +113,12 @@ export default function FriendsPage() {
       {/* Pending requests */}
       {requests.length > 0 && (
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-gray-800">{t('friends_requests_heading')} ({requests.length})</p>
+          <p className="text-sm font-semibold text-gray-800">
+            {t('friends_requests_heading')} ({requests.length})
+          </p>
           {requests.map(req => (
             <div key={req.friendshipId} className="card flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-sand-green flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                {(req.requesterDisplayName ?? req.requesterEmail).slice(0, 2).toUpperCase()}
-              </div>
+              <UserAvatar name={req.requesterDisplayName} email={req.requesterEmail} />
               <div className="flex-1 min-w-0">
                 {req.requesterDisplayName && (
                   <p className="text-sm font-medium text-gray-800 truncate">{req.requesterDisplayName}</p>
@@ -138,15 +146,15 @@ export default function FriendsPage() {
 
       {/* Friends list */}
       <div className="space-y-2">
-        <p className="text-sm font-semibold text-gray-800">{t('friends_list_heading')} ({friends.length})</p>
+        <p className="text-sm font-semibold text-gray-800">
+          {t('friends_list_heading')} ({friends.length})
+        </p>
         {friends.length === 0 ? (
           <p className="text-sm text-warm-gray">{t('friends_empty')}</p>
         ) : (
           friends.map(friend => (
             <div key={friend.friendshipId} className="card flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-sand-blue flex items-center justify-center text-gray-700 font-semibold text-sm flex-shrink-0">
-                {(friend.displayName ?? friend.email).slice(0, 2).toUpperCase()}
-              </div>
+              <UserAvatar name={friend.displayName} email={friend.email} color="blue" />
               <div className="flex-1 min-w-0">
                 {friend.displayName && (
                   <p className="text-sm font-medium text-gray-800 truncate">{friend.displayName}</p>
