@@ -1,13 +1,15 @@
 import type { Project, ProjectCategory } from '../types'
 import { normalizeProject } from '../projectOverviewMedia'
 import { api, uploadFile } from './client'
+import { projectSchema, safeParsed } from './schemas'
+import { z } from 'zod'
 
-const projectRes = normalizeProject
+const projectRes = (data: unknown) => normalizeProject(safeParsed(projectSchema, data, 'Project'))
 
 export const projectsApi = {
   getAll: async (category?: ProjectCategory): Promise<Project[]> => {
     const r = await api.get<Project[]>('/projects', { params: { category } })
-    return r.data.map(projectRes)
+    return safeParsed(z.array(projectSchema), r.data, 'Project[]').map(normalizeProject)
   },
 
   getOne: async (id: number): Promise<Project> => {
@@ -15,19 +17,42 @@ export const projectsApi = {
     return projectRes(r.data)
   },
 
-  create: async (data: { name: string; startDate: number; category: ProjectCategory; description?: string; tags?: string }): Promise<Project> => {
+  create: async (data: {
+    name: string
+    startDate: number
+    category: ProjectCategory
+    description?: string
+    tags?: string
+  }): Promise<Project> => {
     const r = await api.post<Project>('/projects', data)
     return projectRes(r.data)
   },
 
-  update: async (id: number, data: Partial<{ name: string; description: string; tags: string; notes: string; recipeText: string; craftDetails: string; startDate: number; endDate: number; clearEndDate: boolean; isPublic: boolean }>): Promise<Project> => {
+  update: async (
+    id: number,
+    data: Partial<{
+      name: string
+      description: string
+      tags: string
+      notes: string
+      recipeText: string
+      craftDetails: string
+      startDate: number
+      endDate: number
+      clearEndDate: boolean
+      isPublic: boolean
+    }>
+  ): Promise<Project> => {
     const r = await api.put<Project>(`/projects/${id}`, data)
     return projectRes(r.data)
   },
 
   uploadCoverImage: async (id: number, file: File): Promise<Project> => {
     const publicUrl = await uploadFile(file, `project-covers/${id}`)
-    const r = await api.post<Project>(`/projects/${id}/cover-images/register`, { originalName: file.name, fileUrl: publicUrl })
+    const r = await api.post<Project>(`/projects/${id}/cover-images/register`, {
+      originalName: file.name,
+      fileUrl: publicUrl,
+    })
     return projectRes(r.data)
   },
 
@@ -43,12 +68,25 @@ export const projectsApi = {
 
   uploadMaterialImage: async (id: number, materialId: number, file: File): Promise<Project> => {
     const publicUrl = await uploadFile(file, `project-materials/${id}/${materialId}`)
-    const r = await api.post<Project>(`/projects/${id}/material-images/register`, { originalName: file.name, fileUrl: publicUrl, materialId })
+    const r = await api.post<Project>(`/projects/${id}/material-images/register`, {
+      originalName: file.name,
+      fileUrl: publicUrl,
+      materialId,
+    })
     return projectRes(r.data)
   },
 
-  registerMaterialImageByUrl: async (id: number, materialId: number, fileUrl: string, originalName: string): Promise<Project> => {
-    const r = await api.post<Project>(`/projects/${id}/material-images/register`, { originalName: originalName || 'image', fileUrl, materialId })
+  registerMaterialImageByUrl: async (
+    id: number,
+    materialId: number,
+    fileUrl: string,
+    originalName: string
+  ): Promise<Project> => {
+    const r = await api.post<Project>(`/projects/${id}/material-images/register`, {
+      originalName: originalName || 'image',
+      fileUrl,
+      materialId,
+    })
     return projectRes(r.data)
   },
 
@@ -64,7 +102,18 @@ export const projectsApi = {
 
   delete: (id: number) => api.delete(`/projects/${id}`),
 
-  addMaterial: async (id: number, data: { name: string; type: string; itemType?: string; color?: string; colorHex?: string; amount?: string; unit?: string }): Promise<Project> => {
+  addMaterial: async (
+    id: number,
+    data: {
+      name: string
+      type: string
+      itemType?: string
+      color?: string
+      colorHex?: string
+      amount?: string
+      unit?: string
+    }
+  ): Promise<Project> => {
     const r = await api.post<Project>(`/projects/${id}/materials`, data)
     return projectRes(r.data)
   },
@@ -74,7 +123,10 @@ export const projectsApi = {
     return projectRes(r.data)
   },
 
-  updateRowCounter: async (id: number, data: { stitchesPerRound: number; totalRounds: number; checkedStitches: string }): Promise<Project> => {
+  updateRowCounter: async (
+    id: number,
+    data: { stitchesPerRound: number; totalRounds: number; checkedStitches: string }
+  ): Promise<Project> => {
     const r = await api.put<Project>(`/projects/${id}/row-counter`, data)
     return projectRes(r.data)
   },
@@ -84,7 +136,11 @@ export const projectsApi = {
     return projectRes(r.data)
   },
 
-  updatePatternGrid: async (id: number, gridId: number, data: { rows: number; cols: number; cellData: string }): Promise<Project> => {
+  updatePatternGrid: async (
+    id: number,
+    gridId: number,
+    data: { rows: number; cols: number; cellData: string }
+  ): Promise<Project> => {
     const r = await api.put<Project>(`/projects/${id}/pattern-grids/${gridId}`, data)
     return projectRes(r.data)
   },
