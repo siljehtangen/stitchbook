@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { FiCheck, FiX, FiLogOut, FiRefreshCw, FiTrash2 } from 'react-icons/fi'
+import { FiLogOut, FiRefreshCw, FiTrash2 } from 'react-icons/fi'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
+import { useConfirmDialog } from '../context/ConfirmDialogContext'
 import { accountApi, projectsApi, libraryApi, friendsApi } from '../api'
 import { UserAvatar } from '../components/UserAvatar'
 import { ThemeColorPicker, LanguageSwitcher } from '../components/LanguageSwitcher'
@@ -15,7 +16,6 @@ function DangerAction({
   warning,
   triggerLabel,
   confirmLabel,
-  pendingLabel,
   onConfirm,
   tone,
 }: {
@@ -24,13 +24,12 @@ function DangerAction({
   warning: string
   triggerLabel: string
   confirmLabel: string
-  pendingLabel: string
   onConfirm: () => Promise<void>
   tone: 'orange' | 'red'
 }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
-  const [confirming, setConfirming] = useState(false)
+  const { confirm } = useConfirmDialog()
   const [pending, setPending] = useState(false)
 
   const colors =
@@ -38,23 +37,25 @@ function DangerAction({
       ? {
           row: 'bg-[#fdf6f1] border-[#ecd4c4]',
           title: 'text-[#b06a4f]',
-          warning: 'text-[#b06a4f]',
-          bg: 'bg-[#c8956b] hover:brightness-95',
           trigger: 'border-[#e2b79b] text-[#b06a4f] hover:bg-[#f7e8dd]',
         }
       : {
           row: 'bg-[#fdf3f1] border-[#ecc9c4]',
           title: 'text-[#c0705f]',
-          warning: 'text-[#c0705f]',
-          bg: 'bg-[#c0705f] hover:brightness-95',
           trigger: 'border-[#e2b0a8] text-[#c0705f] hover:bg-[#f8e6e2]',
         }
 
-  async function handleConfirm() {
+  async function handleTrigger() {
+    const ok = await confirm({
+      message: warning,
+      confirmLabel,
+      tone: tone === 'orange' ? 'neutral' : 'danger',
+      requireTyped: tone === 'red' ? 'DELETE' : undefined,
+    })
+    if (!ok) return
     setPending(true)
     try {
       await onConfirm()
-      setConfirming(false)
     } catch {
       showToast(t('action_failed'), 'error')
     } finally {
@@ -68,37 +69,14 @@ function DangerAction({
         <p className={`text-sm font-semibold ${colors.title}`}>{title}</p>
         <p className="text-xs text-warm-gray mt-0.5">{description}</p>
       </div>
-      {confirming ? (
-        <div className="space-y-2">
-          <p className={`text-xs font-medium ${colors.warning}`}>{warning}</p>
-          <div className="flex items-center justify-end gap-2">
-            <button
-              onClick={() => setConfirming(false)}
-              disabled={pending}
-              className="px-4 py-2 rounded-xl border border-soft-brown/30 text-warm-gray text-sm hover:bg-soft-brown/10 transition-colors inline-flex items-center justify-center gap-1.5"
-            >
-              <FiX className="text-base" />
-              {t('cancel')}
-            </button>
-            <button
-              onClick={handleConfirm}
-              disabled={pending}
-              className={`py-2 px-4 rounded-xl text-white font-medium text-sm transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-1.5 ${colors.bg}`}
-            >
-              <FiCheck className="text-base" />
-              {pending ? pendingLabel : confirmLabel}
-            </button>
-          </div>
-        </div>
-      ) : (
-        <button
-          onClick={() => setConfirming(true)}
-          className={`py-2 px-4 rounded-xl border font-medium text-sm transition-colors inline-flex items-center justify-center gap-1.5 ${colors.trigger}`}
-        >
-          {tone === 'orange' ? <FiRefreshCw className="text-base" /> : <FiTrash2 className="text-base" />}
-          {triggerLabel}
-        </button>
-      )}
+      <button
+        onClick={() => void handleTrigger()}
+        disabled={pending}
+        className={`py-2 px-4 rounded-xl border font-medium text-sm transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-1.5 ${colors.trigger}`}
+      >
+        {tone === 'orange' ? <FiRefreshCw className="text-base" /> : <FiTrash2 className="text-base" />}
+        {triggerLabel}
+      </button>
     </div>
   )
 }
@@ -193,7 +171,6 @@ export default function ProfilePage() {
           warning={t('reset_data_confirm_warning')}
           triggerLabel={t('reset_data_btn')}
           confirmLabel={t('reset_data_confirm_btn')}
-          pendingLabel={t('resetting')}
           onConfirm={async () => {
             await accountApi.resetData()
             showToast(t('data_reset_toast'))
@@ -207,7 +184,6 @@ export default function ProfilePage() {
           warning={t('delete_account_confirm_warning')}
           triggerLabel={t('delete_account_btn')}
           confirmLabel={t('delete_account_confirm_btn')}
-          pendingLabel={t('deleting')}
           onConfirm={async () => {
             await accountApi.deleteAccount()
             await signOut()

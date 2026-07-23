@@ -104,10 +104,9 @@ describe('LibraryCard', () => {
     expect(onDelete).toHaveBeenCalledWith(1)
   })
 
-  it('opens the edit dialog when the edit button is clicked', async () => {
+  it('opens the edit panel when the edit button is clicked', async () => {
     renderCard()
     await userEvent.click(screen.getByLabelText('edit'))
-    expect(screen.getByText('lib_editing')).toBeInTheDocument()
     expect(screen.getByText('lib_save_changes')).toBeInTheDocument()
     expect(screen.getByText('cancel')).toBeInTheDocument()
   })

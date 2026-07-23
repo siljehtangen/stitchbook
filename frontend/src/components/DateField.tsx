@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { FiCalendar, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
+import { FiCalendar, FiChevronLeft, FiChevronRight, FiX } from 'react-icons/fi'
 
 interface DateFieldProps {
   value: string
@@ -143,7 +143,7 @@ function DatePickerModal({
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="presentation">
       <button
         type="button"
-        className="absolute inset-0 bg-black/40"
+        className="absolute inset-0 bg-ink/35"
         style={{ backdropFilter: 'blur(2px)' }}
         aria-label={t('cancel')}
         onClick={onClose}
@@ -153,7 +153,7 @@ function DatePickerModal({
         role="dialog"
         aria-modal="true"
         tabIndex={-1}
-        className="relative w-full max-w-[320px] rounded-2xl border border-[rgb(var(--border-light))] bg-white shadow-warm-lg overflow-hidden outline-none"
+        className="relative w-full max-w-[320px] rounded-2xl border border-[rgb(var(--border-light))] bg-[#fdfbf8] shadow-warm-lg overflow-hidden outline-none"
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-[rgb(var(--border-light))]">
           <button
@@ -165,14 +165,24 @@ function DatePickerModal({
             <FiChevronLeft className="text-lg" />
           </button>
           <p className="text-sm font-semibold text-ink capitalize">{monthLabel}</p>
-          <button
-            type="button"
-            onClick={() => shiftMonth(1)}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-warm-gray hover:text-ink hover:bg-soft-brown/20 transition-colors"
-            aria-label={t('date_next_month')}
-          >
-            <FiChevronRight className="text-lg" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => shiftMonth(1)}
+              className="w-9 h-9 rounded-full flex items-center justify-center text-warm-gray hover:text-ink hover:bg-soft-brown/20 transition-colors"
+              aria-label={t('date_next_month')}
+            >
+              <FiChevronRight className="text-lg" />
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-9 h-9 rounded-full flex items-center justify-center text-warm-gray hover:text-ink hover:bg-soft-brown/20 transition-colors"
+              aria-label={t('close')}
+            >
+              <FiX className="text-lg" />
+            </button>
+          </div>
         </div>
 
         <div className="px-3 pt-3 pb-2">

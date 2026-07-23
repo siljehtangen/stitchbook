@@ -208,6 +208,26 @@ export const projectsApi = {
     return fetchProject(id)
   },
 
+  updateMaterial: async (
+    id: number,
+    materialId: number,
+    data: { type: string; color?: string; colorHex?: string; amount?: string; unit?: string }
+  ): Promise<Project> => {
+    const { error } = await supabase
+      .from('materials')
+      .update({
+        type: data.type,
+        color: data.color ?? '',
+        color_hex: data.colorHex ?? '#000000',
+        amount: data.amount ?? '',
+        unit: data.unit ?? 'g',
+      })
+      .eq('id', materialId)
+      .eq('project_id', id)
+    raiseError(error, 'Failed to update material')
+    return fetchProject(id)
+  },
+
   deleteMaterial: async (id: number, materialId: number): Promise<Project> => {
     const { data: imgs } = await supabase
       .from('project_images')

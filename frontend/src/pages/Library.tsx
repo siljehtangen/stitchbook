@@ -1,12 +1,14 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiPlus } from 'react-icons/fi'
+import { FiPlus, FiRefreshCw } from 'react-icons/fi'
+import { HiOutlineColorSwatch, HiOutlineExclamationCircle } from 'react-icons/hi'
 import { useToast } from '../context/ToastContext'
 import { libraryApi } from '../api'
 import type { LibraryItem, LibraryItemType } from '../types'
 import { ITEM_TYPES, TYPE_ICONS, LibraryItemForm } from '../components/LibraryItemForm'
 import { LibraryFilterBar } from '../components/LibraryFilterBar'
 import { LibraryCard } from '../components/LibraryCard'
+import { EmptyState } from '../components/EmptyState'
 import { typeLabel } from '../utils/libraryUtils'
 import { useLibraryFilter } from '../hooks/useLibraryFilter'
 import { useConfirmDelete } from '../hooks/useConfirmDelete'
@@ -131,16 +133,25 @@ export default function Library() {
           {loading ? (
             <div className="text-center py-12 text-warm-gray">{t('loading')}</div>
           ) : error ? (
-            <div className="text-center py-12 space-y-3">
-              <p className="text-red-400 text-sm">{t('load_failed')}</p>
-              <button type="button" onClick={refetch} className="btn-ghost text-sm">
-                {t('retry')}
-              </button>
-            </div>
+            <EmptyState
+              icon={<HiOutlineExclamationCircle />}
+              heading={t('load_failed')}
+              tone="danger"
+              action={{ label: t('retry'), onClick: refetch, icon: <FiRefreshCw className="text-sm" /> }}
+            />
           ) : filtered.length === 0 ? (
-            <div className="card text-center py-10">
-              <p className="text-warm-gray text-sm">{t('library_empty')}</p>
-            </div>
+            <EmptyState
+              icon={<HiOutlineColorSwatch />}
+              heading={t('library_empty')}
+              action={{
+                label: t('library_add'),
+                onClick: () => {
+                  setSelectedType(filterType ?? 'YARN')
+                  setAdding(true)
+                },
+                icon: <FiPlus className="text-base" />,
+              }}
+            />
           ) : (
             <div className="space-y-6">
               {grouped.map(({ type, items: groupItems }) => (
